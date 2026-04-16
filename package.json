@@ -1,0 +1,61 @@
+{
+    "author": "MakeAwesomeHappen",
+    "dependencies": {
+        "@rebble/clay": "^1.0.8"
+    },
+    "keywords": [
+        "pebble-app"
+    ],
+    "name": "watchface-tutorial",
+    "pebble": {
+        "capabilities": [
+            "location",
+            "configurable"
+        ],
+        "displayName": "Tutorial Watchface",
+        "enableMultiJS": true,
+        "messageKeys": [
+            "BackgroundColor",
+            "HourColor",
+            "MinuteColor",
+            "HourSize",
+            "HourPulse",
+            "BTPulse"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "compatibility": "2.7",
+                    "file": "fonts/Jersey10-Regular.ttf",
+                    "name": "FONT_JERSEY_56",
+                    "type": "font"
+                },
+                {
+                    "compatibility": "2.7",
+                    "file": "fonts/Jersey10-Regular.ttf",
+                    "name": "FONT_JERSEY_24",
+                    "type": "font"
+                },
+                {
+                    "file": "images/bt-icon.png",
+                    "name": "IMAGE_BT_ICON",
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk",
+            "diorite",
+            "emery"
+        ],
+        "uuid": "828a37f8-f404-4dd9-9ac1-98e7e8cc6bd2",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}

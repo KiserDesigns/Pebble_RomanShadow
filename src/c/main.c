@@ -33,8 +33,8 @@ static void prv_default_settings() {
   settings.HourColor = GColorWhite;
   settings.MinuteColor = GColorBlack;
   settings.HourSize = 2;
-  HourPulse = true;
-  BTPulse = true;
+  settings.HourPulse = true;
+  settings.BTPulse = true;
 }
 
 // Save settings to persistent storage
@@ -331,7 +331,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     window_set_background_color(s_main_window, settings.BackgroundColor);
   }
   
-  //ifdef PBL_COLOR
   Tuple *hour_color_t = dict_find(iterator, MESSAGE_KEY_HourColor);
   if (hour_color_t) {
     settings.HourColor = GColorFromHEX(hour_color_t->value->int32);

@@ -1,7 +1,7 @@
 module.exports = [
   {
     "type": "heading",
-    "defaultValue": "Roman Shadow Settings"
+    "defaultValue": "Rombra (Roman Umbra) Settings"
   },
   {
     "type": "slider",

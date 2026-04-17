@@ -1,18 +1,17 @@
 {
-    "author": "MakeAwesomeHappen",
+    "author": "Kiser Designs",
     "dependencies": {
         "@rebble/clay": "^1.0.8"
     },
     "keywords": [
         "pebble-app"
     ],
-    "name": "watchface-tutorial",
+    "name": "rombra",
     "pebble": {
         "capabilities": [
-            "location",
             "configurable"
         ],
-        "displayName": "Tutorial Watchface",
+        "displayName": "Rombra",
         "enableMultiJS": true,
         "messageKeys": [
             "BackgroundColor",
@@ -26,20 +25,11 @@
         "resources": {
             "media": [
                 {
-                    "compatibility": "2.7",
-                    "file": "fonts/Jersey10-Regular.ttf",
-                    "name": "FONT_JERSEY_56",
-                    "type": "font"
-                },
-                {
-                    "compatibility": "2.7",
-                    "file": "fonts/Jersey10-Regular.ttf",
-                    "name": "FONT_JERSEY_24",
-                    "type": "font"
-                },
-                {
-                    "file": "images/bt-icon.png",
-                    "name": "IMAGE_BT_ICON",
+                    "file": "images/icon",
+                    "menuIcon": true,
+                    "name": "ICON",
+                    "storageFormat": "png",
+                    "targetPlatforms": null,
                     "type": "bitmap"
                 }
             ]
@@ -50,9 +40,11 @@
             "basalt",
             "chalk",
             "diorite",
-            "emery"
+            "emery",
+            "gabbro",
+            "flint"
         ],
-        "uuid": "828a37f8-f404-4dd9-9ac1-98e7e8cc6bd2",
+        "uuid": "67eaf43c-7295-427b-8c0f-5f2779693403",
         "watchapp": {
             "watchface": true
         }

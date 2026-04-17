@@ -23,8 +23,6 @@ static Window *s_main_window;
 static Layer *s_window_layer;
 
 // Global Values:
-static int s_battery_level;
-static bool s_battery_charging;
 static bool s_bluetooth_connected;
 
 // Set default settings
@@ -50,7 +48,8 @@ static void prv_load_settings() {
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
 
-static int I[] = {9,
+//width, number of points, points
+static int I[] = {0, 9,
                     0, -12,
                     0, -9,
                     0, -6,
@@ -60,8 +59,7 @@ static int I[] = {9,
                     0, 6,
                     0, 9,
                     0, 12};
-
-static int V[] = {17,
+static int V[] = {2, 17,
                     -8, -12,
                     -7, -9,
                     -6, -6,
@@ -79,8 +77,7 @@ static int V[] = {17,
                     6, -6,
                     7, -9,
                     8, -12};
-
-static int X[] = {17,
+static int X[] = {2, 17,
                     -8, -12,
                     -6, -9,
                     -4, -6,
@@ -98,164 +95,37 @@ static int X[] = {17,
                     4, -6,
                     6, -9,
                     8, -12,};
-
 typedef struct RomanNumeral {
   int Width;
   int NumberOfDigits;
-  int* Digit1;
-  int* Digit2;
-  int* Digit3;
-  int* Digit4;
+  int* Digits[];
 } RomanNumeral;
-
-RomanNumeral One =     {0, 1, I, 0, 0, 0};
-RomanNumeral Two =     {2, 2, I, I, 0, 0};
-RomanNumeral Three =   {4, 3, I, I, I, 0};
-RomanNumeral Four =    {4, 2, I, V, 0, 0};
-RomanNumeral FourAlt = {6, 4, I, I, I, I};
-RomanNumeral Five =    {2, 1, V, 0, 0, 0};
-RomanNumeral Six =     {4, 2, V, I, 0, 0};
-RomanNumeral Seven =   {6, 3, V, I, I, 0};
-RomanNumeral Eight =   {8, 4, V, I, I, I};
-RomanNumeral Nine =    {4, 2, I, X, 0, 0};
-RomanNumeral Ten =     {2, 1, X, 0, 0, 0};
-RomanNumeral Eleven =  {4, 2, X, I, 0, 0};
-RomanNumeral Twelve =  {6, 3, X, I, I, 0};
-  
+RomanNumeral One =     {0, 1, {I}};
+RomanNumeral Two =     {2, 2, {I, I}};
+RomanNumeral Three =   {4, 3, {I, I, I}};
+RomanNumeral Four =    {6, 2, {I, V}};
+RomanNumeral Five =    {4, 1, {V}};
+RomanNumeral Six =     {6, 2, {V, I}};
+RomanNumeral Seven =   {8, 3, {V, I, I}};
+RomanNumeral Eight =   {10, 4, {V, I, I, I}};
+RomanNumeral Nine =    {6, 2, {I, X}};
+RomanNumeral Ten =     {4, 1, {X}};
+RomanNumeral Eleven =  {6, 2, {X, I}};
+RomanNumeral Twelve =  {8, 3, {X, I, I}};
 RomanNumeral* Numerals[] = {&Twelve, &One, &Two, &Three, &Four, &Five, &Six, &Seven, &Eight, &Nine, &Ten, &Eleven};
 
-static int zero[] = {5,
-                     -1,-2,
-                    1,-2,
-                    1,1,
-                    0,2,
-                    -1,2,
-                    -1,-2};
-static int one[] = {4,
-                    -1,-1,
-                    0,-2,
-                    0,2,
-                    -1,2,
-                    1,2};
-static int two[] = {6,
-                   -1,-2,
-                   1,-2,
-                   1,0,
-                   0,0,
-                   -1,1,
-                   -1,2,
-                   1,2};
-static int three[] = {6,
-                     -1,-2,
-                     1,-2,
-                     1,-1,
-                     0,0,
-                     1,1,
-                     1,2,
-                     -1,2};
-static int four[] = {4,
-                    -1,-2,
-                    -1,0,
-                    1,0,
-                    1,-2,
-                    1,2};
-static int five[] = {6,
-                    1,-2,
-                    -1,-2,
-                    -1,0,
-                    1,0,
-                    1,1,
-                    0,2,
-                    -1,2};
-static int six[] = {6,
-                    1,-2,
-                    0,-2,
-                    -1,-1,
-                    -1,2,
-                    1,2,
-                    1,0,
-                    -1,0};
-static int seven[] = {4,
-                     -1,-2,
-                    1,-2,
-                    1,-1,
-                    0,0,
-                    0,2};
-static int eight[] = {8,
-                     -1,-2,
-                    1,-2,
-                    1,-1,
-                    -1,1,
-                    -1,2,
-                    1,2,
-                    1,1,
-                    -1,-1,
-                    -1,-2};
-static int nine[] = {6, // number of strokes
-                    -1,2, // point 1 of stroke 1
-                    0,2, // point 2 of stroke 1, which is point 1 of stroke 2
-                    1,1,
-                    1,-2,
-                    -1,-2,
-                    -1,0,
-                    1,0}; // last point of the last stroke
-static int* numbers[] = {zero, one, two, three, four, five, six, seven, eight, nine};
-
-/* static void draw_date(GContext *ctx, GPoint center, int max_len, int day_of_month) {
-  //DateSize = 3, 1-5
-  //DateThickness = 5: 1,3,5,7,9
-  
-  // Calculate Date Digits
-  int date_radius = max_len/2;
-  int segment_length = settings.DateThickness / 2 + settings.DateSize;
-  int digit_width = 2 * segment_length;
-  
-  int digit, i;
-  GPoint digit_center, start, end;
-  
-  // draw thin background outline
-  graphics_context_set_stroke_color(ctx, settings.BackgroundColor);
-  graphics_context_set_stroke_width(ctx, settings.DateThickness+4);
-    // left digit background
-  digit_center = GPoint(center.x + date_radius - digit_width, center.y);
-  digit = day_of_month / 10;
-  for (i = 1; i < 2*numbers[digit][0]; i = i + 2) {
-    start = GPoint(digit_center.x + numbers[digit][i]*segment_length, digit_center.y + numbers[digit][i+1]*segment_length);
-    end = GPoint(digit_center.x + numbers[digit][i+2]*segment_length, digit_center.y + numbers[digit][i+3]*segment_length);
-    graphics_draw_line(ctx, start, end);
-  }
-    // right digit background
-  digit_center = GPoint(center.x + date_radius + digit_width, center.y);
-  digit = day_of_month % 10;
-  for (i = 1; i < 2*numbers[digit][0]; i+=2) {
-    start = GPoint(digit_center.x + numbers[digit][i]*segment_length, digit_center.y + numbers[digit][i+1]*segment_length);
-    end = GPoint(digit_center.x + numbers[digit][i+2]*segment_length, digit_center.y + numbers[digit][i+3]*segment_length);
-    graphics_draw_line(ctx, start, end);
-  }
-  
-  // draw digits
-  graphics_context_set_stroke_color(ctx, settings.DateColor);
-  graphics_context_set_stroke_width(ctx, settings.DateThickness);
-    // first digit
-  digit_center = GPoint(center.x + date_radius - digit_width, center.y);
-  digit = day_of_month / 10;
-  for (i = 1; i < 2*numbers[digit][0]; i = i + 2) {
-    start = GPoint(digit_center.x + numbers[digit][i]*segment_length, digit_center.y + numbers[digit][i+1]*segment_length);
-    end = GPoint(digit_center.x + numbers[digit][i+2]*segment_length, digit_center.y + numbers[digit][i+3]*segment_length);
-    graphics_draw_line(ctx, start, end);
-  }
-    // second digit
-  digit_center = GPoint(center.x + date_radius + digit_width, center.y);
-  digit = day_of_month % 10;
-  for (i = 1; i < 2*numbers[digit][0]; i+=2) {
-    start = GPoint(digit_center.x + numbers[digit][i]*segment_length, digit_center.y + numbers[digit][i+1]*segment_length);
-    end = GPoint(digit_center.x + numbers[digit][i+2]*segment_length, digit_center.y + numbers[digit][i+3]*segment_length);
-    graphics_draw_line(ctx, start, end);
-  }
-  
-  
+#if defined(PBL_BW)
+static void byte_set_bit(uint8_t *byte, uint8_t bit, uint8_t value) {
+  *byte ^= (-value ^ *byte) & (1 << bit);
 }
-*/
+
+static void set_pixel_color(GBitmapDataRowInfo info, uint16_t x, uint8_t color) {
+  // Find the correct byte, then set the appropriate bit
+  uint8_t byte = x / 8;
+  uint8_t bit = x % 8; 
+  byte_set_bit(&info.data[byte], bit, color);
+}
+#endif
 
 static void window_update_proc(Layer *layer, GContext *ctx) {
   
@@ -266,7 +136,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   window_set_background_color(s_main_window, settings.BackgroundColor);
   
-  // Get Local Time and Day of Month
+  // Get Local Time
   int hour = tick_time->tm_hour % 12;
   int minute = tick_time->tm_min;
   
@@ -275,36 +145,95 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     vibes_double_pulse();
   }
   
-  
-  int hour_angle = DEG_TO_TRIGANGLE (30*hour + 0.5*minute);
   int minute_angle = DEG_TO_TRIGANGLE (6*minute);
   
   // Get center of screen and max visible arm length for scaling
   GPoint center = GPoint((bounds.size.w-1)/2, (bounds.size.h-1)/2);
-  int max_len = center.x>center.y? center.y : center.x;
-  
-  // Calculate Hour Hand
-  int hour_len = 40;
-  GRect hour_rect = GRect ( center.x - hour_len, center.y - hour_len, 2*hour_len+1, 2*hour_len+1);
-  GPoint hour_end = gpoint_from_polar(hour_rect, GOvalScaleModeFitCircle, hour_angle);
-  
-  // Calculate Minute Hand
-  int minute_len = 70;
-  GRect minute_rect = GRect ( center.x - minute_len, center.y - minute_len, 2*minute_len+1, 2*minute_len+1);
-  GPoint minute_end = gpoint_from_polar(minute_rect, GOvalScaleModeFitCircle, minute_angle);
+  int max_len = 2 * (center.x>center.y ? center.x : center.y);
+  int shadow_y = (-cos_lookup(minute_angle) * max_len / TRIG_MAX_RATIO);
+  int shadow_x = (sin_lookup(minute_angle) *max_len / TRIG_MAX_RATIO);
 
+
+  GPoint digit_center, start, end;
+  int i, j;
   
-  // Draw Hands
-    // Thin Background Border
-  graphics_context_set_stroke_color(ctx, settings.BackgroundColor);
-  graphics_draw_line(ctx, center, hour_end);
-  graphics_draw_line(ctx, center, minute_end);
-    // Actual Hands
-  graphics_context_set_stroke_color(ctx, settings.HourColor);
-  graphics_context_set_stroke_width(ctx, settings.HourSize);
-  graphics_draw_line(ctx, center, hour_end);
+  // Calculate the stroke thickness
+  int thickness = 4*settings.HourSize;
+  graphics_context_set_stroke_width(ctx, thickness + 1);
+  
+  // Draw Minute Shadow
+  #ifdef PBL_BW
+  if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
+    if (gcolor_equal(settings.BackgroundColor, GColorWhite)) {
+      graphics_context_set_stroke_color(ctx, GColorBlack);
+    } else {
+      graphics_context_set_stroke_color(ctx, GColorWhite);
+    }
+  } else {
+    graphics_context_set_stroke_color(ctx, settings.MinuteColor);
+  }
+  #else
   graphics_context_set_stroke_color(ctx, settings.MinuteColor);
-  graphics_draw_line(ctx, center, minute_end);
+  #endif
+  
+  digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+  for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+    digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+    for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+      start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+      end = GPoint(start.x + shadow_x, start.y + shadow_y);
+      graphics_draw_line(ctx, start, end);
+    }
+    digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+  }
+  
+  #ifdef PBL_BW
+  if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
+    GBitmap *fb = graphics_capture_frame_buffer_format(ctx, GBitmapFormat1Bit);
+    if (gcolor_equal(settings.BackgroundColor, GColorWhite)) {
+      // Iterate over all rows
+      for(int i = 0; i < bounds.size.h; i++) {
+        // Get this row's range and data
+        GBitmapDataRowInfo info = gbitmap_get_data_row_info(fb, i);
+        // Iterate over all visible columns
+        for(int j = info.min_x; j <= info.max_x; j++) {
+          // Apply a gray mask (whiting out a checkerboard)
+          if ( (i+j+1) % 2 ){
+            set_pixel_color(info, j, 1);
+          }
+        }
+      }
+    } else {
+      // Iterate over all rows
+      for(int i = 0; i < bounds.size.h; i++) {
+        // Get this row's range and data
+        GBitmapDataRowInfo info = gbitmap_get_data_row_info(fb, i);
+        // Iterate over all visible columns
+        for(int j = info.min_x; j <= info.max_x; j++) {
+          // Apply a gray mask (blacking out a checkerboard)
+          if ( (i+j) % 2 ){
+            set_pixel_color(info, j, 0);
+          }
+        }
+      }
+    }
+    graphics_release_frame_buffer(ctx, fb);
+  }
+  #endif
+  
+  
+  // Draw Hour Numeral
+  graphics_context_set_stroke_color(ctx, settings.HourColor);
+  digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+  for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+    digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+    for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+      start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+      end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
+      graphics_draw_line(ctx, start, end);
+    }
+    digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+  }
   
 
 }
@@ -364,15 +293,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   }
 }
-
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
-
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
 }
-
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
@@ -405,7 +331,7 @@ static void init() {
 
   layer_mark_dirty(s_window_layer);
 
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = bluetooth_callback

@@ -19,7 +19,8 @@
             "MinuteColor",
             "HourSize",
             "HourPulse",
-            "BTPulse"
+            "BTPulse",
+            "Ticks"
         ],
         "projectType": "native",
         "resources": {
@@ -49,5 +50,5 @@
             "watchface": true
         }
     },
-    "version": "1.0.0"
+    "version": "1.2.0"
 }

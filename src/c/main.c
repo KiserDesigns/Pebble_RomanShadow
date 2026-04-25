@@ -11,6 +11,7 @@ typedef struct ClaySettings {
   int HourSize;
   bool HourPulse;
   bool BTPulse;
+  bool Ticks;
 } ClaySettings;
 
 // An instance of the struct
@@ -33,6 +34,7 @@ static void prv_default_settings() {
   settings.HourSize = 2;
   settings.HourPulse = true;
   settings.BTPulse = true;
+  settings.Ticks = true;
 }
 
 // Save settings to persistent storage
@@ -187,6 +189,14 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
   
+  if (settings.Ticks) {
+    for (i = 0; i < 12; i++){
+      start = GPoint(center.x + cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO, center.y + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO);
+      end = GPoint(center.x + cos_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
+      graphics_draw_line(ctx, start, end);
+    }
+  }
+  
   #ifdef PBL_BW
   if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
     GBitmap *fb = graphics_capture_frame_buffer_format(ctx, GBitmapFormat1Bit);
@@ -235,6 +245,13 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
   
+  if (settings.Ticks) {
+    i = (minute + 2)/5;
+      start = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO);
+      end = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
+      graphics_draw_line(ctx, start, end);
+    
+  }
 
 }
 
@@ -284,10 +301,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (bt_pulse_t) {
     settings.BTPulse = bt_pulse_t->value->int32 == 1;
   }
+  
+  Tuple *ticks_t = dict_find(iterator, MESSAGE_KEY_Ticks);
+  if (ticks_t) {
+    settings.Ticks = ticks_t->value->int32 == 1;
+  }
 
   // Save and apply if any settings were changed
   if ( bg_color_t || hour_color_t || min_color_t || \
-      hour_size_t || hour_pulse_t || bt_pulse_t) {
+      hour_size_t || hour_pulse_t || bt_pulse_t || ticks_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);
 
@@ -331,7 +353,7 @@ static void init() {
 
   layer_mark_dirty(s_window_layer);
 
-  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
 
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = bluetooth_callback

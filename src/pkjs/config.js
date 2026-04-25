@@ -4,20 +4,20 @@ module.exports = [
     "defaultValue": "Rombra (Roman Umbra) Settings"
   },
   {
-    "type": "slider",
-    "messageKey": "HourSize",
-    "defaultValue": 2,
-    "label": "Hour Numeral Size",
-    "min": 1,
-    "max": 3,
-    "step": 1
-  },
-  {
     "type": "section",
     "items": [
       {
         "type": "heading",
-        "defaultValue": "Colors"
+        "defaultValue": "Visuals"
+      },
+      {
+        "type": "slider",
+        "messageKey": "HourSize",
+        "defaultValue": 2,
+        "label": "Hour Numeral Size",
+        "min": 1,
+        "max": 3,
+        "step": 1
       },
       {
         "type": "color",
@@ -38,7 +38,13 @@ module.exports = [
         "defaultValue": "0x000000",
         "label": "Minute Shadow",
         "allowGray": "true"
-      }
+      },
+      {
+        "type": "toggle",
+        "messageKey": "Ticks",
+        "label": "Show 5-min/hour Ticks",
+        "defaultValue": true
+      },
     ]
   },
   {

@@ -40,10 +40,13 @@ module.exports = [
         "allowGray": "true"
       },
       {
-        "type": "toggle",
-        "messageKey": "Ticks",
-        "label": "Show 5-min/hour Ticks",
-        "defaultValue": true
+        "type": "slider",
+        "messageKey": "TickSize",
+        "label": "5-min Tick Size (none=0)",
+        "defaultValue": 3,
+        "min": 0,
+        "max": 7,
+        "step": 1
       },
     ]
   },

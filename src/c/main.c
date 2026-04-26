@@ -11,7 +11,7 @@ typedef struct ClaySettings {
   int HourSize;
   bool HourPulse;
   bool BTPulse;
-  bool Ticks;
+  int TickSize;
 } ClaySettings;
 
 // An instance of the struct
@@ -22,6 +22,9 @@ static Window *s_main_window;
 
 // Root (Parent) Window Layer
 static Layer *s_window_layer;
+
+// Custom fonts
+static GFont s_font_regular_48;
 
 // Global Values:
 static bool s_bluetooth_connected;
@@ -34,7 +37,7 @@ static void prv_default_settings() {
   settings.HourSize = 2;
   settings.HourPulse = true;
   settings.BTPulse = true;
-  settings.Ticks = true;
+  settings.TickSize = 3;
 }
 
 // Save settings to persistent storage
@@ -96,7 +99,26 @@ static int X[] = {2, 17,
                     2, -3,
                     4, -6,
                     6, -9,
-                    8, -12,};
+                    8, -12};
+/*
+static int lilI[] = {0, 1,
+                    0, -3,
+                    0, 3};
+
+static int lilV[] = {2, 2,
+                    -1, -3,
+                    0, 3,
+                    0, 3,
+                    1, -3};
+
+static int lilX[] = {2, 2,
+                    -1, -3,
+                    1, 3,
+                    -1, 3,
+                    1, -3};
+*/
+
+
 typedef struct RomanNumeral {
   int Width;
   int NumberOfDigits;
@@ -134,13 +156,14 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
   
-  GRect bounds = layer_get_bounds(s_window_layer);
+  GRect bounds = layer_get_unobstructed_bounds(s_window_layer);
   
   window_set_background_color(s_main_window, settings.BackgroundColor);
   
   // Get Local Time
   int hour = tick_time->tm_hour % 12;
   int minute = tick_time->tm_min;
+  // int date = tick_time->tm_mday;
   
   // double pulse on the top of the hour
   if (minute == 0 && settings.HourPulse){
@@ -161,16 +184,12 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // Calculate the stroke thickness
   int thickness = 4*settings.HourSize;
-  graphics_context_set_stroke_width(ctx, thickness + 1);
   
   // Draw Minute Shadow
+  graphics_context_set_stroke_width(ctx, thickness + 1);
   #ifdef PBL_BW
   if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
-    if (gcolor_equal(settings.BackgroundColor, GColorWhite)) {
-      graphics_context_set_stroke_color(ctx, GColorBlack);
-    } else {
-      graphics_context_set_stroke_color(ctx, GColorWhite);
-    }
+      graphics_context_set_stroke_color(ctx, gcolor_equal(settings.BackgroundColor, GColorWhite)?GColorBlack:GColorWhite);
   } else {
     graphics_context_set_stroke_color(ctx, settings.MinuteColor);
   }
@@ -189,10 +208,11 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
   
-  if (settings.Ticks) {
+  if (settings.TickSize > 0) {
+    graphics_context_set_stroke_width(ctx, settings.TickSize*2 - 1);
     for (i = 0; i < 12; i++){
       start = GPoint(center.x + cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO, center.y + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO);
-      end = GPoint(center.x + cos_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
+      end = GPoint(center.x + cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
       graphics_draw_line(ctx, start, end);
     }
   }
@@ -231,8 +251,8 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   }
   #endif
   
-  
   // Draw Hour Numeral
+  graphics_context_set_stroke_width(ctx, thickness + 1);
   graphics_context_set_stroke_color(ctx, settings.HourColor);
   digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
   for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
@@ -245,12 +265,12 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
   
-  if (settings.Ticks) {
+  if (settings.TickSize > 0) {
+    graphics_context_set_stroke_width(ctx, settings.TickSize*2 - 1);
     i = (minute + 2)/5;
-      start = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO);
-      end = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * bounds.size.h / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
-      graphics_draw_line(ctx, start, end);
-    
+    start = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / TRIG_MAX_RATIO);
+    end = GPoint(center.x + sin_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO, center.y - cos_lookup(DEG_TO_TRIGANGLE (30*i)) * max_len / 20 * (i%3>0?9:8) / TRIG_MAX_RATIO);
+    graphics_draw_line(ctx, start, end);
   }
 
 }
@@ -302,14 +322,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.BTPulse = bt_pulse_t->value->int32 == 1;
   }
   
-  Tuple *ticks_t = dict_find(iterator, MESSAGE_KEY_Ticks);
-  if (ticks_t) {
-    settings.Ticks = ticks_t->value->int32 == 1;
+  Tuple *tick_size_t = dict_find(iterator, MESSAGE_KEY_TickSize);
+  if (tick_size_t) {
+    settings.TickSize = tick_size_t->value->int32;
   }
 
   // Save and apply if any settings were changed
   if ( bg_color_t || hour_color_t || min_color_t || \
-      hour_size_t || hour_pulse_t || bt_pulse_t || ticks_t) {
+      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);
 
@@ -325,6 +345,21 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
+static void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, void *context) {
+  layer_mark_dirty(s_window_layer);
+  //window_update_proc(Layer *layer, GContext *ctx);
+}
+
+static void prv_unobstructed_change(AnimationProgress progress, void *context) {
+  layer_mark_dirty(s_window_layer);
+  //window_update_proc(Layer *layer, GContext *ctx);
+}
+
+static void prv_unobstructed_did_change(void *context) {
+  layer_mark_dirty(s_window_layer);
+  //window_update_proc(Layer *layer, GContext *ctx);
+}
+
 static void main_window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_get_root_layer(window));
 
@@ -333,9 +368,21 @@ static void main_window_load(Window *window) {
   layer_set_update_proc(s_window_layer, window_update_proc);
   
   layer_add_child(window_get_root_layer(window), s_window_layer);
+  
+  UnobstructedAreaHandlers handlers = {
+    .will_change = prv_unobstructed_will_change,
+    .change = prv_unobstructed_change,
+    .did_change = prv_unobstructed_did_change
+  };
+  unobstructed_area_service_subscribe(handlers, NULL);
+  
 }
 
 static void main_window_unload(Window *window) {
+  
+  // Unload custom fonts
+  fonts_unload_custom_font(s_font_regular_48);
+  
   layer_destroy(s_window_layer);
 }
 

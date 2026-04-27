@@ -42,12 +42,19 @@ module.exports = [
       {
         "type": "slider",
         "messageKey": "TickSize",
-        "label": "5-min Tick Size (none=0)",
+        "label": "5-min Tick Size (0=None)",
         "defaultValue": 3,
         "min": 0,
-        "max": 7,
+        "max": 23,
         "step": 1
       },
+      {
+        "type": "toggle",
+        "messageKey": "HourMode",
+        "label": "24hr Mode (0-XXIII)",
+        "defaultValue": false
+      }
+      
     ]
   },
   {

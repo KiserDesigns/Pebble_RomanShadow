@@ -12,6 +12,7 @@ typedef struct ClaySettings {
   bool HourPulse;
   bool BTPulse;
   int TickSize;
+  bool HourMode;
 } ClaySettings;
 
 // An instance of the struct
@@ -38,6 +39,7 @@ static void prv_default_settings() {
   settings.HourPulse = true;
   settings.BTPulse = true;
   settings.TickSize = 3;
+  settings.HourMode = false;
 }
 
 // Save settings to persistent storage
@@ -124,19 +126,32 @@ typedef struct RomanNumeral {
   int NumberOfDigits;
   int* Digits[];
 } RomanNumeral;
-RomanNumeral One =     {0, 1, {I}};
-RomanNumeral Two =     {2, 2, {I, I}};
-RomanNumeral Three =   {4, 3, {I, I, I}};
-RomanNumeral Four =    {6, 2, {I, V}};
-RomanNumeral Five =    {4, 1, {V}};
-RomanNumeral Six =     {6, 2, {V, I}};
-RomanNumeral Seven =   {8, 3, {V, I, I}};
-RomanNumeral Eight =   {10, 4, {V, I, I, I}};
-RomanNumeral Nine =    {6, 2, {I, X}};
-RomanNumeral Ten =     {4, 1, {X}};
-RomanNumeral Eleven =  {6, 2, {X, I}};
-RomanNumeral Twelve =  {8, 3, {X, I, I}};
-RomanNumeral* Numerals[] = {&Twelve, &One, &Two, &Three, &Four, &Five, &Six, &Seven, &Eight, &Nine, &Ten, &Eleven};
+RomanNumeral _1 =   {0, 1, {I}};
+RomanNumeral _2 =   {2, 2, {I, I}};
+RomanNumeral _3 =   {4, 3, {I, I, I}};
+RomanNumeral _4 =   {6, 2, {I, V}};
+RomanNumeral _5 =   {4, 1, {V}};
+RomanNumeral _6 =   {6, 2, {V, I}};
+RomanNumeral _7 =   {8, 3, {V, I, I}};
+RomanNumeral _8 =   {10, 4, {V, I, I, I}};
+RomanNumeral _9 =   {6, 2, {I, X}};
+RomanNumeral _10 =  {4, 1, {X}};
+RomanNumeral _11 =  {6, 2, {X, I}};
+RomanNumeral _12 =  {8, 3, {X, I, I}};
+
+RomanNumeral _13 =  {10, 4, {X, I, I, I}};
+RomanNumeral _14 =  {12, 3, {X, I, V}};
+RomanNumeral _15 =  {10, 2, {X, V}};
+RomanNumeral _16 =  {12, 3, {X, V, I}};
+RomanNumeral _17 =  {14, 4, {X, V, I, I}};
+RomanNumeral _18 =  {16, 5, {X, V, I, I, I}};
+RomanNumeral _19 =  {12, 3, {X, I, X}};
+RomanNumeral _20 =  {10, 2, {X, X}};
+RomanNumeral _21 =  {12, 3, {X, X, I}};
+RomanNumeral _22 =  {14, 4, {X, X, I, I}};
+RomanNumeral _23 =  {16, 5, {X, X, I, I, I}};
+RomanNumeral* Numerals[] = {&_12, &_1, &_2, &_3, &_4, &_5, &_6, &_7, &_8, &_9, &_10, &_11,
+                            &_12, &_13, &_14, &_15, &_16, &_17, &_18, &_19, &_20, &_21, &_22, &_23};
 
 #if defined(PBL_BW)
 static void byte_set_bit(uint8_t *byte, uint8_t bit, uint8_t value) {
@@ -161,8 +176,11 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   window_set_background_color(s_main_window, settings.BackgroundColor);
   
   // Get Local Time
-  int hour = tick_time->tm_hour % 12;
+  int hour = tick_time->tm_hour % (settings.HourMode?24:12);
+  //hour = tick_time->tm_sec % 24;
   int minute = tick_time->tm_min;
+  //minute = tick_time->tm_sec;
+  //hour = minute % 2;
   // int date = tick_time->tm_mday;
   
   // double pulse on the top of the hour
@@ -196,18 +214,25 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   #else
   graphics_context_set_stroke_color(ctx, settings.MinuteColor);
   #endif
-  
-  digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
-  for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
-    digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
-    for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-      start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
-      end = GPoint(start.x + shadow_x, start.y + shadow_y);
-      graphics_draw_line(ctx, start, end);
+  if (hour == 0 && settings.HourMode == true){
+    start = GPoint(center.x, center.y);
+    end = GPoint(center.x + shadow_x, center.y + shadow_y);
+    graphics_context_set_stroke_width(ctx, 28*settings.HourSize+1);
+    graphics_draw_line(ctx, start, end);
+  } else {
+    graphics_context_set_stroke_width(ctx, thickness + 1);
+    digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+    
+    for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+      digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+      for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+        end = GPoint(start.x + shadow_x, start.y + shadow_y);
+        graphics_draw_line(ctx, start, end);
+      }
+      digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
     }
-    digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
-  
   if (settings.TickSize > 0) {
     graphics_context_set_stroke_width(ctx, settings.TickSize*2 - 1);
     for (i = 0; i < 12; i++){
@@ -252,17 +277,25 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   #endif
   
   // Draw Hour Numeral
-  graphics_context_set_stroke_width(ctx, thickness + 1);
+  
   graphics_context_set_stroke_color(ctx, settings.HourColor);
-  digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
-  for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
-    digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
-    for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-      start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
-      end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
-      graphics_draw_line(ctx, start, end);
+  if (hour == 0 && settings.HourMode == true){
+    start = GPoint(center.x, center.y);
+    end = GPoint(center.x + shadow_x, center.y + shadow_y);
+    graphics_context_set_stroke_width(ctx, thickness + 1);
+    graphics_draw_circle(ctx, start, 12*settings.HourSize);
+  } else {
+    graphics_context_set_stroke_width(ctx, thickness + 1);
+    digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+    for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+      digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+      for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+        end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
+        graphics_draw_line(ctx, start, end);
+      }
+      digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
     }
-    digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
   }
   
   if (settings.TickSize > 0) {
@@ -326,9 +359,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (tick_size_t) {
     settings.TickSize = tick_size_t->value->int32;
   }
+  
+  Tuple *hour_mode_t = dict_find(iterator, MESSAGE_KEY_HourMode);
+  if (hour_mode_t) {
+    settings.HourMode = hour_mode_t->value->int32 == 1;
+  }
 
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || \
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);
@@ -400,7 +438,7 @@ static void init() {
 
   layer_mark_dirty(s_window_layer);
 
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = bluetooth_callback

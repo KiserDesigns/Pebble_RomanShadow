@@ -22,7 +22,8 @@
             "BTPulse",
             "TickSize",
             "HourMode",
-            "BacklightColor"
+            "BacklightColor",
+            "VibeOffset"
         ],
         "projectType": "native",
         "resources": {

@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 // define DEV when in development, for testing purposes
-#define DEV
+//#define DEV
 
 // define SCREENSHOT when posing for screenshots
 //#define SCREENSHOT
@@ -16,6 +16,7 @@ typedef struct ClaySettings {
   GColor MinuteColor;
   int HourSize;
   bool HourPulse;
+  int VibeOffset;
   bool BTPulse;
   int TickSize;
   bool HourMode;
@@ -46,6 +47,7 @@ static void prv_default_settings() {
   settings.MinuteColor = GColorBlack;
   settings.HourSize = 2;
   settings.HourPulse = true;
+  settings.VibeOffset = 0;
   settings.BTPulse = true;
   settings.TickSize = 3;
   settings.HourMode = false;
@@ -198,14 +200,18 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   #ifdef DEV
   hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12) % 2;
-  minute = tick_time->tm_sec;
+  minute = (tick_time->tm_sec % 12 + 54) % 60;
+  hour = 10;
   #endif
   
   // int date = tick_time->tm_mday;
   
-  // double pulse on the top of the hour
-  if (minute == 0 && settings.HourPulse){
+  // double pulse on the top of the hour, plus offset
+  if ((minute == (60+settings.VibeOffset)%60) && settings.HourPulse){
     vibes_double_pulse();
+    #ifdef DEV
+    hour = 5;
+    #endif
   }
   
   int minute_angle = DEG_TO_TRIGANGLE (6*minute);
@@ -363,6 +369,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.HourPulse = hour_pulse_t->value->int32 == 1;
   }
   
+  Tuple *vibe_offset_t = dict_find(iterator, MESSAGE_KEY_VibeOffset);
+  if (vibe_offset_t) {
+    settings.VibeOffset = vibe_offset_t->value->int32;
+  }
+  
   Tuple *bt_pulse_t = dict_find(iterator, MESSAGE_KEY_BTPulse);
   if (bt_pulse_t) {
     settings.BTPulse = bt_pulse_t->value->int32 == 1;
@@ -386,7 +397,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || light_color_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);
@@ -395,7 +406,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   #else
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);

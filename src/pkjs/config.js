@@ -78,6 +78,15 @@ module.exports = [
         "defaultValue": true
       },
       {
+        "type": "slider",
+        "messageKey": "VibeOffset",
+        "label": "Offset Hour Pulse by X Minutes",
+        "defaultValue": 0,
+        "min": -5,
+        "max": 5,
+        "step": 1
+      },
+      {
         "type": "toggle",
         "messageKey": "BTPulse",
         "label": "Pulse on BT Disconnect",

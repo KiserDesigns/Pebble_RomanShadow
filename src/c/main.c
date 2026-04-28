@@ -28,6 +28,48 @@ typedef struct ClaySettings {
 // An instance of the struct
 static ClaySettings settings;
 
+#ifdef SCREENSHOT
+static ClaySettings screen1 = {
+  GColorLightGray, GColorWhite, GColorBlack,
+  2, false, 0, false, 3, false
+  #ifdef PBL_RGB_BACKLIGHT
+  , GColorWhite
+  #endif
+};
+
+static ClaySettings screen2 = {
+  GColorBlack, GColorWhite, GColorLightGray,
+  3, false, 0, false, 1, false
+  #ifdef PBL_RGB_BACKLIGHT
+  , GColorWhite
+  #endif
+};
+
+static ClaySettings screen3 = {
+  GColorWhite, GColorBlack, GColorLightGray,
+  1, false, 0, false, 5, true
+  #ifdef PBL_RGB_BACKLIGHT
+  , GColorWhite
+  #endif
+};
+
+static ClaySettings screen4 = {
+  GColorDukeBlue, GColorIcterine, GColorCyan,
+  2, false, 0, false, 0, false
+  #ifdef PBL_RGB_BACKLIGHT
+  , GColorWhite
+  #endif
+};
+
+static ClaySettings screen5 = {
+  GColorMintGreen, GColorBulgarianRose, GColorJaegerGreen,
+  2, false, 0, false, 3, true
+  #ifdef PBL_RGB_BACKLIGHT
+  , GColorWhite
+  #endif
+};
+#endif
+
 // Main Window
 static Window *s_main_window;
 
@@ -199,9 +241,13 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   int minute = tick_time->tm_min;
   
   #ifdef DEV
-  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12) % 2;
+  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12);
   minute = (tick_time->tm_sec % 12 + 54) % 60;
-  hour = 10;
+  #endif
+  
+  #ifdef SCREENSHOT
+  hour = 19 % (settings.HourMode?24:12);
+  minute = (20+tick_time->tm_sec)%60;
   #endif
   
   // int date = tick_time->tm_mday;
@@ -328,6 +374,20 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+  
+  #ifdef SCREENSHOT
+  if (tick_time->tm_sec == 58) {
+    settings = screen3; }
+  if (tick_time->tm_sec == 59) {
+    settings = screen2; }
+  if (tick_time->tm_sec == 0) {
+    settings = screen1; }
+  if (tick_time->tm_sec == 01) {
+    settings = screen4; }
+  if (tick_time->tm_sec == 02) {
+    settings = screen5; }
+  window_set_background_color(s_main_window, settings.BackgroundColor);
+  #endif
   layer_mark_dirty(s_window_layer);
 }
 
@@ -481,7 +541,11 @@ static void init() {
   #ifdef DEV
   tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
   #else
+  #ifdef SCREENSHOT
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  #else
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  #endif
   #endif
 
   connection_service_subscribe((ConnectionHandlers) {

@@ -1,5 +1,11 @@
 #include <pebble.h>
 
+// define DEV when in development, for testing purposes
+#define DEV
+
+// define SCREENSHOT when posing for screenshots
+//#define SCREENSHOT
+
 // Persistent storage key
 #define SETTINGS_KEY 1
 
@@ -177,10 +183,13 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // Get Local Time
   int hour = tick_time->tm_hour % (settings.HourMode?24:12);
-  //hour = tick_time->tm_sec % 24;
   int minute = tick_time->tm_min;
-  //minute = tick_time->tm_sec;
-  //hour = minute % 2;
+  
+  #ifdef DEV
+  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12);
+  minute = tick_time->tm_sec;
+  #endif
+  
   // int date = tick_time->tm_mday;
   
   // double pulse on the top of the hour
@@ -438,7 +447,11 @@ static void init() {
 
   layer_mark_dirty(s_window_layer);
 
+  #ifdef DEV
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  #else
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  #endif
 
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = bluetooth_callback

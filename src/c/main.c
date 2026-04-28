@@ -191,7 +191,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   window_set_background_color(s_main_window, settings.BackgroundColor);
   #ifdef PBL_RGB_BACKLIGHT
-  light_set_color(BacklightColor);
+  light_set_color(settings.BacklightColor);
   #endif
   
   // Get Local Time
@@ -393,7 +393,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *light_color_t = dict_find(iterator, MESSAGE_KEY_BacklightColor);
   if (light_color_t) {
     settings.BacklightColor = GColorFromHEX(light_color_t->value->int32);
-    light_set_color(BacklightColor);
+    light_set_color(settings.BacklightColor);
   }
   
   // Save and apply if any settings were changed

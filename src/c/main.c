@@ -19,6 +19,9 @@ typedef struct ClaySettings {
   bool BTPulse;
   int TickSize;
   bool HourMode;
+  #ifdef PBL_RGB_BACKLIGHT
+  GColor BacklightColor;
+  #endif
 } ClaySettings;
 
 // An instance of the struct
@@ -46,6 +49,9 @@ static void prv_default_settings() {
   settings.BTPulse = true;
   settings.TickSize = 3;
   settings.HourMode = false;
+  #ifdef PBL_RGB_BACKLIGHT
+  settings.BacklightColor = GColorWhite;
+  #endif
 }
 
 // Save settings to persistent storage
@@ -61,6 +67,21 @@ static void prv_load_settings() {
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
 
+// Some bit-manipulation for BW displays for gray masks
+#if defined(PBL_BW)
+static void byte_set_bit(uint8_t *byte, uint8_t bit, uint8_t value) {
+  *byte ^= (-value ^ *byte) & (1 << bit);
+}
+
+static void set_pixel_color(GBitmapDataRowInfo info, uint16_t x, uint8_t color) {
+  // Find the correct byte, then set the appropriate bit
+  uint8_t byte = x / 8;
+  uint8_t bit = x % 8; 
+  byte_set_bit(&info.data[byte], bit, color);
+}
+#endif
+
+#include <pebble.h>
 //width, number of points, points
 static int I[] = {0, 9,
                     0, -12,
@@ -159,19 +180,6 @@ RomanNumeral _23 =  {16, 5, {X, X, I, I, I}};
 RomanNumeral* Numerals[] = {&_12, &_1, &_2, &_3, &_4, &_5, &_6, &_7, &_8, &_9, &_10, &_11,
                             &_12, &_13, &_14, &_15, &_16, &_17, &_18, &_19, &_20, &_21, &_22, &_23};
 
-#if defined(PBL_BW)
-static void byte_set_bit(uint8_t *byte, uint8_t bit, uint8_t value) {
-  *byte ^= (-value ^ *byte) & (1 << bit);
-}
-
-static void set_pixel_color(GBitmapDataRowInfo info, uint16_t x, uint8_t color) {
-  // Find the correct byte, then set the appropriate bit
-  uint8_t byte = x / 8;
-  uint8_t bit = x % 8; 
-  byte_set_bit(&info.data[byte], bit, color);
-}
-#endif
-
 static void window_update_proc(Layer *layer, GContext *ctx) {
   
   time_t temp = time(NULL);
@@ -180,13 +188,16 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_unobstructed_bounds(s_window_layer);
   
   window_set_background_color(s_main_window, settings.BackgroundColor);
+  #ifdef PBL_RGB_BACKLIGHT
+  light_set_color(BacklightColor);
+  #endif
   
   // Get Local Time
   int hour = tick_time->tm_hour % (settings.HourMode?24:12);
   int minute = tick_time->tm_min;
   
   #ifdef DEV
-  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12);
+  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12) % 2;
   minute = tick_time->tm_sec;
   #endif
   
@@ -212,17 +223,22 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   // Calculate the stroke thickness
   int thickness = 4*settings.HourSize;
   
-  // Draw Minute Shadow
+  // Draw Shadow Elements (minute umbra, ticks, etc)
   graphics_context_set_stroke_width(ctx, thickness + 1);
+  
+  // For BW displays, draw the shadows in the opposite color of the background if the shadow is supposed to be Gray
   #ifdef PBL_BW
+  bool is_white = gcolor_equal(settings.BackgroundColor, GColorWhite);
   if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
-      graphics_context_set_stroke_color(ctx, gcolor_equal(settings.BackgroundColor, GColorWhite)?GColorBlack:GColorWhite);
+      graphics_context_set_stroke_color(ctx, is_white?GColorBlack:GColorWhite);
   } else {
     graphics_context_set_stroke_color(ctx, settings.MinuteColor);
   }
   #else
   graphics_context_set_stroke_color(ctx, settings.MinuteColor);
   #endif
+  
+  //Draw Roman Hour Shadow
   if (hour == 0 && settings.HourMode == true){
     start = GPoint(center.x, center.y);
     end = GPoint(center.x + shadow_x, center.y + shadow_y);
@@ -242,6 +258,8 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
     }
   }
+  
+  //Draw Ticks
   if (settings.TickSize > 0) {
     graphics_context_set_stroke_width(ctx, settings.TickSize*2 - 1);
     for (i = 0; i < 12; i++){
@@ -251,33 +269,19 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     }
   }
   
+  //on BW displays, if the shadow is supposed to be Gray, color in a checkboard pattern of the background color across the whole screen
   #ifdef PBL_BW
   if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
     GBitmap *fb = graphics_capture_frame_buffer_format(ctx, GBitmapFormat1Bit);
-    if (gcolor_equal(settings.BackgroundColor, GColorWhite)) {
-      // Iterate over all rows
-      for(int i = 0; i < bounds.size.h; i++) {
-        // Get this row's range and data
-        GBitmapDataRowInfo info = gbitmap_get_data_row_info(fb, i);
-        // Iterate over all visible columns
-        for(int j = info.min_x; j <= info.max_x; j++) {
-          // Apply a gray mask (whiting out a checkerboard)
-          if ( (i+j+1) % 2 ){
-            set_pixel_color(info, j, 1);
-          }
-        }
-      }
-    } else {
-      // Iterate over all rows
-      for(int i = 0; i < bounds.size.h; i++) {
-        // Get this row's range and data
-        GBitmapDataRowInfo info = gbitmap_get_data_row_info(fb, i);
-        // Iterate over all visible columns
-        for(int j = info.min_x; j <= info.max_x; j++) {
-          // Apply a gray mask (blacking out a checkerboard)
-          if ( (i+j) % 2 ){
-            set_pixel_color(info, j, 0);
-          }
+    // Iterate over all rows
+    for(int i = 0; i < bounds.size.h; i++) {
+      // Get this row's range and data
+      GBitmapDataRowInfo info = gbitmap_get_data_row_info(fb, i);
+      // Iterate over all visible columns
+      for(int j = info.min_x; j <= info.max_x; j++) {
+        // Apply a gray mask (whiting out a checkerboard on white backgrounds, blacking out on black backgrounds)
+        if ( (i+j+(is_white?1:0)) % 2 ){
+          set_pixel_color(info, j, is_white?1:0);
         }
       }
     }
@@ -373,14 +377,30 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (hour_mode_t) {
     settings.HourMode = hour_mode_t->value->int32 == 1;
   }
-
+  
+  #ifdef PBL_RGB_BACKLIGHT
+  Tuple *light_color_t = dict_find(iterator, MESSAGE_KEY_BacklightColor);
+  if (light_color_t) {
+    settings.BacklightColor = GColorFromHEX(light_color_t->value->int32);
+    light_set_color(BacklightColor);
+  }
+  
+  // Save and apply if any settings were changed
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t ||\
+      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || light_color_t) {
+    prv_save_settings();
+    layer_mark_dirty(s_window_layer);
+  }
+  
+  #else
+  
   // Save and apply if any settings were changed
   if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
     prv_save_settings();
     layer_mark_dirty(s_window_layer);
-
   }
+  #endif
 }
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");

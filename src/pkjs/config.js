@@ -53,6 +53,13 @@ module.exports = [
         "messageKey": "HourMode",
         "label": "24hr Mode (0-XXIII)",
         "defaultValue": false
+      },
+      {
+        "type": "color",
+        "messageKey": "BacklightColor",
+        "defaultValue": "0xFFFFFF",
+        "label": "Backlight Color",
+        "capabilities": ["PLATFORM_EMERY"]
       }
       
     ]
@@ -62,7 +69,7 @@ module.exports = [
     "items": [
       {
         "type": "heading",
-        "defaultValue": "Vibrations"
+        "defaultValue": "Interactions"
       },
       {
         "type": "toggle",

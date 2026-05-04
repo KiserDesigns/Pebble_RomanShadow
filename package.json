@@ -23,7 +23,14 @@
             "TickSize",
             "HourMode",
             "BacklightColor",
-            "VibeOffset"
+            "VibeOffset",
+            "EN[10]",
+            "HR[10]",
+            "MIN[10]",
+            "BG[10]",
+            "NUM[10]",
+            "UMB[10]",
+            "BL[10]"
         ],
         "projectType": "native",
         "resources": {
@@ -53,5 +60,5 @@
             "watchface": true
         }
     },
-    "version": "1.8.0"
+    "version": "1.9.0"
 }

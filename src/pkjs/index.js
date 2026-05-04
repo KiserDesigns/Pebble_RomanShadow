@@ -6,6 +6,12 @@ var clayConfig = require('./config');
 var clay = new Clay(clayConfig);
 
 
+clay.registerComponent(require('./custom-toggle'));
+clay.registerComponent(require('./custom-color'));
+clay.registerComponent(require('./custom-hour'));
+clay.registerComponent(require('./custom-minute'));
+
+
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready',
   function(e) {

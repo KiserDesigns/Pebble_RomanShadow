@@ -1,13 +1,27 @@
 #include <pebble.h>
 
-// define DEV when in development, for testing purposes
+// define DEV and/or FORCE_BACKLIGHT when in development, for testing purposes
 //#define DEV
+//#define FORCE_BACKLIGHT
 
 // define SCREENSHOT when posing for screenshots
 //#define SCREENSHOT
 
 // Persistent storage key
 #define SETTINGS_KEY 1
+
+// Define schedule struct
+typedef struct ScheduleEntry {
+  bool Enable;
+  int Hour;
+  int Minute;
+  GColor BackgroundColor;
+  GColor HourColor;
+  GColor MinuteColor;
+  GColor BacklightColor;
+} ScheduleEntry;
+
+#define SCHEDULE_ENTRIES 10
 
 // Define our settings struct
 typedef struct ClaySettings {
@@ -20,53 +34,43 @@ typedef struct ClaySettings {
   bool BTPulse;
   int TickSize;
   bool HourMode;
-  #ifdef PBL_RGB_BACKLIGHT
   GColor BacklightColor;
-  #endif
+  ScheduleEntry Schedule[SCHEDULE_ENTRIES];
 } ClaySettings;
 
 // An instance of the struct
 static ClaySettings settings;
 
+// Current colors based on settings or schedule.
+static GColor curr_bg_color;
+static GColor curr_hr_color;
+static GColor curr_min_color;
+static GColor curr_bl_color;
+
 #ifdef SCREENSHOT
 static ClaySettings screen1 = {
   GColorLightGray, GColorWhite, GColorBlack,
-  2, false, 0, false, 3, false
-  #ifdef PBL_RGB_BACKLIGHT
-  , GColorWhite
-  #endif
+  2, false, 0, false, 3, false, GColorWhite
 };
 
 static ClaySettings screen2 = {
   GColorBlack, GColorWhite, GColorLightGray,
-  3, false, 0, false, 1, false
-  #ifdef PBL_RGB_BACKLIGHT
-  , GColorWhite
-  #endif
+  3, false, 0, false, 0, false, GColorWhite
 };
 
 static ClaySettings screen3 = {
   GColorWhite, GColorBlack, GColorLightGray,
-  1, false, 0, false, 5, true
-  #ifdef PBL_RGB_BACKLIGHT
-  , GColorWhite
-  #endif
+  1, false, 0, false, 5, true, GColorWhite
 };
 
 static ClaySettings screen4 = {
   GColorDukeBlue, GColorIcterine, GColorCyan,
-  2, false, 0, false, 0, false
-  #ifdef PBL_RGB_BACKLIGHT
-  , GColorWhite
-  #endif
+  2, false, 0, false, 0, false, GColorWhite
 };
 
 static ClaySettings screen5 = {
   GColorMintGreen, GColorBulgarianRose, GColorJaegerGreen,
-  2, false, 0, false, 3, true
-  #ifdef PBL_RGB_BACKLIGHT
-  , GColorWhite
-  #endif
+  2, false, 0, false, 7, true, GColorWhite
 };
 #endif
 
@@ -93,9 +97,11 @@ static void prv_default_settings() {
   settings.BTPulse = true;
   settings.TickSize = 3;
   settings.HourMode = false;
-  #ifdef PBL_RGB_BACKLIGHT
   settings.BacklightColor = GColorWhite;
-  #endif
+  ScheduleEntry temp = {false, 0, 0, GColorLightGray, GColorWhite, GColorBlack, GColorWhite};
+  for (int i = 0; i < SCHEDULE_ENTRIES; i++) {
+    settings.Schedule[i] = temp;
+  }
 }
 
 // Save settings to persistent storage
@@ -110,6 +116,132 @@ static void prv_load_settings() {
   // Then override with any saved values
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
+
+
+//Apply the current scheduled or settings color to curr_bg_color, curr_hr_color, curr_min_color, and (EMERY) curr_bl_color
+static void apply_schedule_colors() {
+  time_t temp = time(NULL);
+  struct tm *tick_time = localtime(&temp);
+  
+  int hour = tick_time->tm_hour;
+  int minute = tick_time->tm_min;
+  
+  #ifdef DEV
+  hour = 1;
+  minute = (tick_time->tm_sec) % 60;
+  #endif
+  
+  #ifdef SCREENSHOT
+  if (tick_time->tm_sec == 58 || tick_time->tm_sec == 03) {
+    settings = screen3; }
+  if (tick_time->tm_sec == 59) {
+    settings = screen2; }
+  if (tick_time->tm_sec == 0) {
+    settings = screen1; }
+  if (tick_time->tm_sec == 01) {
+    settings = screen4; }
+  if (tick_time->tm_sec == 02) {
+    settings = screen5; }
+  #endif
+  
+  for (int i = 0; i < SCHEDULE_ENTRIES; i++) {
+    if ((settings.Schedule[i].Enable) && \
+        (settings.Schedule[i].Hour == hour) && \
+        (settings.Schedule[i].Minute == minute) ){
+      if (gcolor_equal(settings.Schedule[i].BackgroundColor, GColorBlack) && \
+          gcolor_equal(settings.Schedule[i].HourColor, GColorBlack) && \
+          gcolor_equal(settings.Schedule[i].MinuteColor, GColorBlack)) {
+        curr_bg_color = settings.BackgroundColor;
+        curr_hr_color = settings.HourColor;
+        curr_min_color = settings.MinuteColor;
+        #ifdef PBL_RGB_BACKLIGHT
+        curr_bl_color = settings.BacklightColor;
+        #endif
+      } else {
+        curr_bg_color = settings.Schedule[i].BackgroundColor;
+        curr_hr_color = settings.Schedule[i].HourColor;
+        curr_min_color = settings.Schedule[i].MinuteColor;
+        #ifdef PBL_RGB_BACKLIGHT
+        curr_bl_color = settings.Schedule[i].BacklightColor;
+        #endif
+      }
+    }
+  }
+  window_set_background_color(s_main_window, curr_bg_color);
+}
+
+// On launch [init()] (or at any time), find the correct schedule "window" to be in, and apply those to curr_*
+void bootstrap_schedule_colors() {
+  time_t temp = time(NULL);
+  struct tm *tick_time = localtime(&temp);
+  
+  int hour = tick_time->tm_hour;
+  int minute = tick_time->tm_min;
+  
+  #ifdef DEV
+  hour = 1;
+  minute = (tick_time->tm_sec) % 60;
+  #endif
+  
+  int max_time = -1;
+  int max_index = -1;
+  
+  //loop through to find the latest time in the day 
+  for (int i = 0; i < SCHEDULE_ENTRIES; i++){
+    if (settings.Schedule[i].Enable && ((60 * settings.Schedule[i].Hour + settings.Schedule[i].Minute) > max_time)){
+        max_index = i;
+        max_time = 60 * settings.Schedule[i].Hour + settings.Schedule[i].Minute;
+    }
+  }
+  // If no schedule, set to main Visuals settings.
+  // Else, set the colors as if it is about to turn midnight (the latest time applies), then find the right schedule.
+  if (max_index == -1) {
+    curr_bg_color = settings.BackgroundColor;
+    curr_hr_color = settings.HourColor;
+    curr_min_color = settings.MinuteColor;
+    #ifdef PBL_RGB_BACKLIGHT
+    curr_bl_color = settings.BacklightColor;
+    #endif
+  } else {
+    curr_bg_color = settings.Schedule[max_index].BackgroundColor;
+    curr_hr_color = settings.Schedule[max_index].HourColor;
+    curr_min_color = settings.Schedule[max_index].MinuteColor;
+    #ifdef PBL_RGB_BACKLIGHT
+    curr_bl_color = settings.Schedule[max_index].BacklightColor;
+    #endif
+    
+    int curr_applied_time = -1;
+    // step through the schedule list.
+    // If the schedule time is greater than or equal to the current applied time, consider it (only move time forward).
+    // If the current local time is greater than or equal to the schedule time, apply it, and store the applied time.
+    
+    for (int i = 0; i < SCHEDULE_ENTRIES; i++){
+      if (settings.Schedule[i].Enable && ((60 * settings.Schedule[i].Hour + settings.Schedule[i].Minute) >= curr_applied_time)){
+        if ((60 * hour + minute) >= (60 * settings.Schedule[i].Hour + settings.Schedule[i].Minute)){
+          curr_applied_time = 60 * settings.Schedule[i].Hour + settings.Schedule[i].Minute;
+          if (gcolor_equal(settings.Schedule[i].BackgroundColor, GColorBlack) && \
+              gcolor_equal(settings.Schedule[i].HourColor, GColorBlack) && \
+              gcolor_equal(settings.Schedule[i].MinuteColor, GColorBlack)) {
+            curr_bg_color = settings.BackgroundColor;
+            curr_hr_color = settings.HourColor;
+            curr_min_color = settings.MinuteColor;
+            #ifdef PBL_RGB_BACKLIGHT
+            curr_bl_color = settings.BacklightColor;
+            #endif
+          } else {
+            curr_bg_color = settings.Schedule[i].BackgroundColor;
+            curr_hr_color = settings.Schedule[i].HourColor;
+            curr_min_color = settings.Schedule[i].MinuteColor;
+            #ifdef PBL_RGB_BACKLIGHT
+            curr_bl_color = settings.Schedule[i].BacklightColor;
+            #endif
+          }
+        }
+      }
+    }
+  }
+}
+
 
 // Some bit-manipulation for BW displays for gray masks
 #if defined(PBL_BW)
@@ -231,23 +363,26 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   GRect bounds = layer_get_unobstructed_bounds(s_window_layer);
   
-  window_set_background_color(s_main_window, settings.BackgroundColor);
+  window_set_background_color(s_main_window, curr_bg_color);
   #ifdef PBL_RGB_BACKLIGHT
-  light_set_color(settings.BacklightColor);
+  light_set_color(curr_bl_color);
   #endif
   
   // Get Local Time
   int hour = tick_time->tm_hour % (settings.HourMode?24:12);
+  //clock_is_24h_style() would usually be used instead of explicit settings.
+  //But 24h mode looks weird in roman numerals, even if that's what is set for the rest of the watch
   int minute = tick_time->tm_min;
   
   #ifdef DEV
-  hour = ((tick_time->tm_sec + 60*tick_time->tm_min)/3) % (settings.HourMode?24:12);
-  minute = (tick_time->tm_sec % 12 + 54) % 60;
+  hour = 1;
+  minute = (tick_time->tm_sec) % 60;
   #endif
   
   #ifdef SCREENSHOT
   hour = 19 % (settings.HourMode?24:12);
   minute = (20+tick_time->tm_sec)%60;
+  if (minute == 23) {minute = 18;}
   #endif
   
   // int date = tick_time->tm_mday;
@@ -280,14 +415,14 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // For BW displays, draw the shadows in the opposite color of the background if the shadow is supposed to be Gray
   #ifdef PBL_BW
-  bool is_white = gcolor_equal(settings.BackgroundColor, GColorWhite);
-  if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
+  bool is_white = gcolor_equal(curr_bg_color, GColorWhite);
+  if (gcolor_equal(curr_min_color, GColorLightGray)) {
       graphics_context_set_stroke_color(ctx, is_white?GColorBlack:GColorWhite);
   } else {
-    graphics_context_set_stroke_color(ctx, settings.MinuteColor);
+    graphics_context_set_stroke_color(ctx, curr_min_color);
   }
   #else
-  graphics_context_set_stroke_color(ctx, settings.MinuteColor);
+  graphics_context_set_stroke_color(ctx, curr_min_color);
   #endif
   
   //Draw Roman Hour Shadow
@@ -323,7 +458,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   //on BW displays, if the shadow is supposed to be Gray, color in a checkboard pattern of the background color across the whole screen
   #ifdef PBL_BW
-  if (gcolor_equal(settings.MinuteColor, GColorLightGray)) {
+  if (gcolor_equal(curr_min_color, GColorLightGray)) {
     GBitmap *fb = graphics_capture_frame_buffer_format(ctx, GBitmapFormat1Bit);
     // Iterate over all rows
     for(int i = 0; i < bounds.size.h; i++) {
@@ -343,7 +478,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // Draw Hour Numeral
   
-  graphics_context_set_stroke_color(ctx, settings.HourColor);
+  graphics_context_set_stroke_color(ctx, curr_hr_color);
   if (hour == 0 && settings.HourMode == true){
     start = GPoint(center.x, center.y);
     end = GPoint(center.x + shadow_x, center.y + shadow_y);
@@ -374,20 +509,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  
-  #ifdef SCREENSHOT
-  if (tick_time->tm_sec == 58) {
-    settings = screen3; }
-  if (tick_time->tm_sec == 59) {
-    settings = screen2; }
-  if (tick_time->tm_sec == 0) {
-    settings = screen1; }
-  if (tick_time->tm_sec == 01) {
-    settings = screen4; }
-  if (tick_time->tm_sec == 02) {
-    settings = screen5; }
-  window_set_background_color(s_main_window, settings.BackgroundColor);
-  #endif
+  apply_schedule_colors();
   layer_mark_dirty(s_window_layer);
 }
 
@@ -406,7 +528,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *bg_color_t = dict_find(iterator, MESSAGE_KEY_BackgroundColor);
   if (bg_color_t) {
     settings.BackgroundColor = GColorFromHEX(bg_color_t->value->int32);
-    window_set_background_color(s_main_window, settings.BackgroundColor);
   }
   
   Tuple *hour_color_t = dict_find(iterator, MESSAGE_KEY_HourColor);
@@ -460,6 +581,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || light_color_t) {
     prv_save_settings();
+    apply_schedule_colors();
+    
+    curr_bg_color = settings.BackgroundColor;
+    curr_hr_color = settings.HourColor;
+    curr_min_color = settings.MinuteColor;
+    curr_bl_color = settings.BacklightColor;
+    
+    window_set_background_color(s_main_window, curr_bg_color);
+    
     layer_mark_dirty(s_window_layer);
   }
   
@@ -469,9 +599,70 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
     prv_save_settings();
+    apply_schedule_colors();
+    
+    curr_bg_color = settings.BackgroundColor;
+    curr_hr_color = settings.HourColor;
+    curr_min_color = settings.MinuteColor;
+    
+    window_set_background_color(s_main_window, curr_bg_color);
+    
     layer_mark_dirty(s_window_layer);
   }
   #endif
+  
+  bool sched_changed = false;
+  
+  for (int i = 0; i < SCHEDULE_ENTRIES; i++){
+    Tuple *enable_t = dict_find(iterator, MESSAGE_KEY_EN+i);
+    if (enable_t) {
+      settings.Schedule[i].Enable = enable_t->value->int32 == 1;
+      sched_changed = true;
+    }
+    
+    Tuple *hour_t = dict_find(iterator, MESSAGE_KEY_HR+i);
+    if (hour_t) {
+      char* hour_s = hour_t->value->cstring;
+      settings.Schedule[i].Hour = 10*(hour_s[0] - '0') + (hour_s[1] - '0');
+      sched_changed = true;
+    }
+    
+    Tuple *min_t = dict_find(iterator, MESSAGE_KEY_MIN+i);
+    if (min_t) {
+      char* min_s = min_t->value->cstring;
+      settings.Schedule[i].Minute = 10*(min_s[0] - '0') + (min_s[1] - '0');
+      sched_changed = true;
+    }
+    
+    Tuple *bg_t = dict_find(iterator, MESSAGE_KEY_BG+i);
+    if (bg_t) {
+      settings.Schedule[i].BackgroundColor = GColorFromHEX(bg_t->value->int32);
+      sched_changed = true;
+    }
+    
+    Tuple *num_t = dict_find(iterator, MESSAGE_KEY_NUM+i);
+    if (num_t) {
+      settings.Schedule[i].HourColor = GColorFromHEX(num_t->value->int32);
+      sched_changed = true;
+    }
+    
+    Tuple *umb_t = dict_find(iterator, MESSAGE_KEY_UMB+i);
+    if (umb_t) {
+      settings.Schedule[i].MinuteColor = GColorFromHEX(umb_t->value->int32);
+      sched_changed = true;
+    }
+    
+    Tuple *bl_t = dict_find(iterator, MESSAGE_KEY_BL+i);
+    if (bl_t) {
+      settings.Schedule[i].BacklightColor = GColorFromHEX(bl_t->value->int32);
+      sched_changed = true;
+    }
+  }
+  
+  if (sched_changed){
+    prv_save_settings();
+  }
+  
 }
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
@@ -527,9 +718,11 @@ static void main_window_unload(Window *window) {
 static void init() {
   // Load settings before creating UI
   prv_load_settings();
+  
+  bootstrap_schedule_colors();
 
   s_main_window = window_create();
-  window_set_background_color(s_main_window, settings.BackgroundColor);
+  window_set_background_color(s_main_window, curr_bg_color);
   window_set_window_handlers(s_main_window, (WindowHandlers) {
     .load = main_window_load,
     .unload = main_window_unload
@@ -559,7 +752,7 @@ static void init() {
   app_message_register_outbox_sent(outbox_sent_callback);
 
   // Open AppMessage
-  const int inbox_size = 256;
+  const int inbox_size = app_message_inbox_size_maximum();
   const int outbox_size = 256;
   app_message_open(inbox_size, outbox_size);
 }
@@ -569,7 +762,15 @@ static void deinit() {
 }
 
 int main(void) {
+  #ifdef FORCE_BACKLIGHT
+  light_enable(true);
+  #endif
+  
   init();
   app_event_loop();
   deinit();
+  
+  #ifdef FORCE_BACKLIGHT
+  light_enable(false);
+  #endif
 }

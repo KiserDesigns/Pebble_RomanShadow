@@ -97,5 +97,397 @@ module.exports = [
   {
     "type": "submit",
     "defaultValue": "Save Settings"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Schedule"
+      },
+      {
+        "type": "text",
+        "defaultValue": "Set colors to Black to use Visuals colors."
+      },
+      {
+        "type": "text",
+        "defaultValue": "Enable | HH:MM | BG | Hr | Min | Backlight",
+        "capabilities": ["PLATFORM_EMERY"]
+      },
+      {
+        "type": "text",
+        "defaultValue": "Enable | HH:MM | Background | Hour | Min ",
+        "capabilities": ["NOT_PLATFORM_EMERY"]
+      },
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[0]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[0]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[0]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[0]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[0]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[0]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[0]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[1]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[1]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[1]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[1]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[1]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[1]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[1]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[2]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[2]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[2]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[2]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[2]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[2]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[2]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[3]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[3]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[3]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[3]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[3]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[3]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[3]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[4]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[4]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[4]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[4]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[4]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[4]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[4]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[5]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[5]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[5]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[5]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[5]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[5]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[5]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[6]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[6]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[6]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[6]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[6]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[6]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[6]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[7]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[7]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[7]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[7]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[7]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[7]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[7]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[8]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[8]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[8]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[8]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[8]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[8]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[8]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "custom-toggle",
+        "messageKey": "EN[9]"
+      },
+      {
+        "type": "custom-hour",
+        "messageKey": "HR[9]"
+      },
+      {
+        "type": "custom-minute",
+        "messageKey": "MIN[9]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BG[9]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "NUM[9]"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "UMB[9]",
+        "allowGray": "true"
+      },
+      {
+        "type": "custom-color",
+        "messageKey": "BL[9]",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["PLATFORM_EMERY"]
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
   }
 ];

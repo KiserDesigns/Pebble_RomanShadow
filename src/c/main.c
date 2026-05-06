@@ -36,6 +36,8 @@ typedef struct ClaySettings {
   bool HourMode;
   GColor BacklightColor;
   ScheduleEntry Schedule[SCHEDULE_ENTRIES];
+  int VibeStart;
+  int VibeEnd;
 } ClaySettings;
 
 // An instance of the struct
@@ -102,6 +104,8 @@ static void prv_default_settings() {
   for (int i = 0; i < SCHEDULE_ENTRIES; i++) {
     settings.Schedule[i] = temp;
   }
+  settings.VibeStart = 8;
+  settings.VibeEnd = 20;
 }
 
 // Save settings to persistent storage
@@ -369,9 +373,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   #endif
   
   // Get Local Time
-  int hour = tick_time->tm_hour % (settings.HourMode?24:12);
-  //clock_is_24h_style() would usually be used instead of explicit settings.
-  //But 24h mode looks weird in roman numerals, even if that's what is set for the rest of the watch
+  int hour = tick_time->tm_hour;
   int minute = tick_time->tm_min;
   
   #ifdef DEV
@@ -389,11 +391,19 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // double pulse on the top of the hour, plus offset
   if ((minute == (60+settings.VibeOffset)%60) && settings.HourPulse){
-    vibes_double_pulse();
-    #ifdef DEV
-    hour = 5;
-    #endif
+    // check that we are within the VibeStart and VibeEnd bounds
+    if (((hour + (settings.VibeOffset<0?1:0))%24 >= settings.VibeStart) &&\
+       ((hour + (settings.VibeOffset<0?1:0))%24 <= settings.VibeEnd)){
+      vibes_double_pulse();
+      #ifdef DEV
+      hour = 5;
+      #endif
+    }
   }
+  
+  //clock_is_24h_style() would usually be used instead of explicit settings.
+  //But 24h mode looks weird in roman numerals, even if that's what is set for the rest of the watch
+  hour = hour % (settings.HourMode?24:12);
   
   int minute_angle = DEG_TO_TRIGANGLE (6*minute);
   
@@ -555,6 +565,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.VibeOffset = vibe_offset_t->value->int32;
   }
   
+  Tuple *vibe_start_t = dict_find(iterator, MESSAGE_KEY_VibeStart);
+  if (vibe_start_t) {
+    settings.VibeStart = vibe_start_t->value->int32;
+  }
+  
+  Tuple *vibe_end_t = dict_find(iterator, MESSAGE_KEY_VibeEnd);
+  if (vibe_end_t) {
+    settings.VibeEnd = vibe_end_t->value->int32;
+  }
+  
   Tuple *bt_pulse_t = dict_find(iterator, MESSAGE_KEY_BTPulse);
   if (bt_pulse_t) {
     settings.BTPulse = bt_pulse_t->value->int32 == 1;
@@ -579,7 +599,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   
   // Save and apply if any settings were changed
   if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
-      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || light_color_t) {
+      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t || light_color_t) {
     prv_save_settings();
     apply_schedule_colors();
     
@@ -597,7 +617,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   
   // Save and apply if any settings were changed
   if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
-      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t) {
+      hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t) {
     prv_save_settings();
     apply_schedule_colors();
     

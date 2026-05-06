@@ -30,7 +30,9 @@
             "BG[10]",
             "NUM[10]",
             "UMB[10]",
-            "BL[10]"
+            "BL[10]",
+            "VibeStart",
+            "VibeEnd"
         ],
         "projectType": "native",
         "resources": {

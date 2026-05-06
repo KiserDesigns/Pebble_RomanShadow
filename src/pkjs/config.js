@@ -45,7 +45,7 @@ module.exports = [
         "label": "5-min Tick Size (0=None)",
         "defaultValue": 3,
         "min": 0,
-        "max": 23,
+        "max": 15,
         "step": 1
       },
       {
@@ -76,6 +76,24 @@ module.exports = [
         "messageKey": "HourPulse",
         "label": "Double Pulse each Hour",
         "defaultValue": true
+      },
+      {
+        "type": "slider",
+        "messageKey": "VibeStart",
+        "label": "AM Hour of First Hour Pulse",
+        "defaultValue": 8,
+        "min": 0,
+        "max": 12,
+        "step": 1
+      },
+      {
+        "type": "slider",
+        "messageKey": "VibeEnd",
+        "label": "PM Hour of Last Hour Pulse",
+        "defaultValue": 20,
+        "min": 12,
+        "max": 23,
+        "step": 1
       },
       {
         "type": "slider",

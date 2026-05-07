@@ -40,6 +40,13 @@ module.exports = [
         "allowGray": "true"
       },
       {
+        "type": "color",
+        "messageKey": "BacklightColor",
+        "defaultValue": "0xFFFFFF",
+        "label": "Backlight Color",
+        "capabilities": ["PLATFORM_EMERY"]
+      },
+      {
         "type": "slider",
         "messageKey": "TickSize",
         "label": "5-min Tick Size (0=None)",
@@ -55,11 +62,10 @@ module.exports = [
         "defaultValue": false
       },
       {
-        "type": "color",
-        "messageKey": "BacklightColor",
-        "defaultValue": "0xFFFFFF",
-        "label": "Backlight Color",
-        "capabilities": ["PLATFORM_EMERY"]
+        "type": "toggle",
+        "messageKey": "NumeralType",
+        "label": "Arabic Numerals",
+        "defaultValue": false
       }
       
     ]

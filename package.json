@@ -32,7 +32,8 @@
             "UMB[10]",
             "BL[10]",
             "VibeStart",
-            "VibeEnd"
+            "VibeEnd",
+            "NumeralType"
         ],
         "projectType": "native",
         "resources": {
@@ -62,5 +63,5 @@
             "watchface": true
         }
     },
-    "version": "1.9.0"
+    "version": "2.0.0"
 }

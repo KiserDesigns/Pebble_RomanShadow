@@ -1,14 +1,14 @@
 #include <pebble.h>
 
 // define DEV and/or FORCE_BACKLIGHT when in development, for testing purposes
-//#define DEV
+#define DEV
 //#define FORCE_BACKLIGHT
 
 // define SCREENSHOT when posing for screenshots
 //#define SCREENSHOT
 
 // Persistent storage key
-#define SETTINGS_KEY 1
+#define SETTINGS_KEY 2
 
 // Define schedule struct
 typedef struct ScheduleEntry {
@@ -38,6 +38,7 @@ typedef struct ClaySettings {
   ScheduleEntry Schedule[SCHEDULE_ENTRIES];
   int VibeStart;
   int VibeEnd;
+  bool NumeralType;
 } ClaySettings;
 
 // An instance of the struct
@@ -106,6 +107,7 @@ static void prv_default_settings() {
   }
   settings.VibeStart = 8;
   settings.VibeEnd = 20;
+  settings.NumeralType = 0;
 }
 
 // Save settings to persistent storage
@@ -309,6 +311,259 @@ static int X[] = {2, 17,
                     4, -6,
                     6, -9,
                     8, -12};
+
+static int __0[] = {2,25,
+                    0,12,
+                    -2,11,
+                    -4,10,
+                    -6,9,
+                    -8,8,
+                    -8,4,
+                    -8,0,
+                    -8,-4,
+                    -8,-8,
+                    -6,-9,
+                    -4,-10,
+                    -2,-11,
+                    0,-12,
+                    2,-11,
+                    4,-10,
+                    6,-9,
+                    8,-8,
+                    8,-4,
+                    8,0,
+                    8,4,
+                    8,8,
+                    6,9,
+                    4,10,
+                    2,11,
+                    0,12};
+static int __1[] = {2,11,
+                    -8,-8,
+                    -6,-9,
+                   -4,-10,
+                    -2,-11,
+                   0,-12,
+                   0,-8,
+                   0,-4,
+                   0,0,
+                   0,4,
+                   0,8,
+                   0,12};
+static int __2[] = {2,24,
+                    -8,-8,
+                    -6,-9,
+                    -4,-10,
+                    -2,-11,
+                    0,-12,
+                    2,-11,
+                    4,-10,
+                    6,-9,
+                    8,-8,
+                    8,-4,
+                    8,0,
+                    6,1,
+                    4,2,
+                    2,3,
+                    0,4,
+                    -2,5,
+                    -4,6,
+                    -6,7,
+                    -8,8,
+                    -8,12,
+                    -4,12,
+                    0,12,
+                    4,12,
+                    8,12};
+static int __3[] = {2,27,
+                    -8,8,
+                    -6,9,
+                    -4,10,
+                    -2,11,
+                    0,12,
+                    2,11,
+                    4,10,
+                    6,9,
+                    8,8,
+                    8,4,
+                    6,3,
+                    4,2,
+                    2,1,
+                    0,0,
+                    2,-1,
+                    4,-2,
+                    6,-3,
+                    8,-4,
+                    8,-8,
+                    6,-9,
+                    4,-10,
+                    2,-11,
+                    0,-12,
+                    -2,-11,
+                    -4,-10,
+                    -6,-9,
+                    -8,-8};
+static int __4[] = {2,15,
+                    -4,-12,
+                    -5,-9,
+                    -6,-6,
+                    -7,-3,
+                    -8,0,
+                    -4,0,
+                    0,0,
+                    4,0,
+                    8,0,
+                    8,-12,
+                    8,-8,
+                    8,-4,
+                    8,4,
+                    8,8,
+                    8,12};
+static int __5[] = {2,25,
+                    8,-12,
+                    4,-12,
+                    0,-12,
+                    -4,-12,
+                    -5,-9,
+                    -6,-6,
+                    -7,-3,
+                    -8,0,
+                    -4,0,
+                    -2,0,
+                    0,-2,
+                    2,-1,
+                    4,0,
+                    6,1,
+                    8,2,
+                    8,5,
+                    8,8,
+                    6,9,
+                    4,10,
+                    2,11,
+                    0,12,
+                    -2,11,
+                    -4,10,
+                    -5,9,
+                    -8,8};
+static int __6[] = {2,31,
+                    8,-8,
+                    6,-9,
+                    4,-10,
+                    2,-11,
+                    0,-12,
+                    -2,-11,
+                    -4,-10,
+                    -6,-9,
+                    -8,-8,
+                    -8,-5,
+                    -8,-1,
+                    -8,5,
+                    -8,8,
+                    -6,9,
+                    -4,10,
+                    -2,11,
+                    0,12,
+                    2,11,
+                    4,10,
+                    6,9,
+                    8,8,
+                    8,5,
+                    8,2,
+                    6,1,
+                    4,0,
+                    2,-1,
+                    0,-2,
+                    -2,-1,
+                    -4,0,
+                    -6,1,
+                    -8,2};
+static int __7[] = {2,13,
+                    -8,-12,
+                    -4,-12,
+                    0,-12,
+                    4,-12,
+                    8,-12,
+                    6,-9,
+                    4,-6,
+                    2,-3,
+                    0,0,
+                    -2,3,
+                    -4,6,
+                    -4,9,
+                    -4,12};
+static int __8[] = {2,38,
+                    0,-2,
+                    2,-3,
+                    4,-4,
+                    6,-5,
+                    8,-6,
+                    8,-8,
+                    6,-9,
+                    4,-10,
+                    2,-11,
+                    0,-12,
+                    -2,-11,
+                    -4,-10,
+                    -6,-9,
+                    -8,-8,
+                    -8,-6,
+                    -6,-5,
+                    -4,-4,
+                    -2,-3,
+                    2,-1,
+                    4,0,
+                    6,1,
+                    8,2,
+                    8,5,
+                    8,8,
+                    6,9,
+                    4,10,
+                    2,11,
+                    0,12,
+                    -2,11,
+                    -4,10,
+                    -6,9,
+                    -8,8,
+                    -8,5,
+                    -8,2,
+                    -6,1,
+                    -4,0,
+                    -2,-1,
+                    0,-2};
+static int __9[] = {2,31,
+                    -8,8,
+                    -6,9,
+                    -4,10,
+                    -2,11,
+                    -0,12,
+                    2,11,
+                    4,10,
+                    6,9,
+                    8,8,
+                    8,5,
+                    8,1,
+                    8,-5,
+                    8,-8,
+                    6,-9,
+                    4,-10,
+                    2,-11,
+                    0,-12,
+                    -2,-11,
+                    -4,-10,
+                    -6,-9,
+                    -8,-8,
+                    -8,-5,
+                    -8,-2,
+                    -6,-1,
+                    -4,0,
+                    -2,1,
+                    -0,2,
+                    2,1,
+                    4,0,
+                    6,-1,
+                    8,-2};
+static int* Arabic[] = {__0,__1,__2,__3,__4,__5,__6,__7,__8,__9};
+
 /*
 static int lilI[] = {0, 1,
                     0, -3,
@@ -345,7 +600,6 @@ RomanNumeral _9 =   {6, 2, {I, X}};
 RomanNumeral _10 =  {4, 1, {X}};
 RomanNumeral _11 =  {6, 2, {X, I}};
 RomanNumeral _12 =  {8, 3, {X, I, I}};
-
 RomanNumeral _13 =  {10, 4, {X, I, I, I}};
 RomanNumeral _14 =  {12, 3, {X, I, V}};
 RomanNumeral _15 =  {10, 2, {X, V}};
@@ -377,8 +631,8 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   int minute = tick_time->tm_min;
   
   #ifdef DEV
-  hour = 1;
-  minute = (tick_time->tm_sec) % 60;
+  hour = (tick_time->tm_sec) % 24;
+  minute = (tick_time->tm_sec/2) % 60;
   #endif
   
   #ifdef SCREENSHOT
@@ -414,14 +668,16 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   int shadow_x = (sin_lookup(minute_angle) *max_len / TRIG_MAX_RATIO);
 
 
-  GPoint digit_center, start, end;
+  GPoint digit_center = GPointZero;
+  GPoint start = GPointZero;
+  GPoint end = GPointZero;
   int i, j;
   
   // Calculate the stroke thickness
   int thickness = 4*settings.HourSize;
   
   // Draw Shadow Elements (minute umbra, ticks, etc)
-  graphics_context_set_stroke_width(ctx, thickness + 1);
+
   
   // For BW displays, draw the shadows in the opposite color of the background if the shadow is supposed to be Gray
   #ifdef PBL_BW
@@ -436,23 +692,53 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   #endif
   
   //Draw Roman Hour Shadow
-  if (hour == 0 && settings.HourMode == true){
-    start = GPoint(center.x, center.y);
-    end = GPoint(center.x + shadow_x, center.y + shadow_y);
-    graphics_context_set_stroke_width(ctx, 28*settings.HourSize+1);
-    graphics_draw_line(ctx, start, end);
-  } else {
+  if (settings.NumeralType == 0){
     graphics_context_set_stroke_width(ctx, thickness + 1);
-    digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
-    
-    for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
-      digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
-      for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-        start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+    if (hour == 0 && settings.HourMode == true){
+      start = GPoint(center.x, center.y);
+      end = GPoint(center.x + shadow_x, center.y + shadow_y);
+      graphics_context_set_stroke_width(ctx, 28*settings.HourSize+1);
+      graphics_draw_line(ctx, start, end);
+    } else {
+      graphics_context_set_stroke_width(ctx, thickness + 1);
+      digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+      
+      for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+        digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+        for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+          end = GPoint(start.x + shadow_x, start.y + shadow_y);
+          graphics_draw_line(ctx, start, end);
+        }
+        digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+      }
+    }
+  }
+  
+  //Draw Arabic Hour Shadow
+  if (settings.NumeralType == 1){
+    graphics_context_set_stroke_width(ctx, thickness + 1);
+    if (hour>=10){
+      //Draw the first digit, then 10's digit
+      int d1 = hour<20?1:0;
+      digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
+      for (i = 2; i <= 2* Arabic[2-d1][1]; i = i + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i], digit_center.y + settings.HourSize*Arabic[2-d1][i+1]);
         end = GPoint(start.x + shadow_x, start.y + shadow_y);
         graphics_draw_line(ctx, start, end);
       }
-      digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+      digit_center = GPoint(digit_center.x + thickness * (6 - (2*d1)), center.y);
+    } else {
+    //Draw single-digit hour
+      digit_center = GPoint(center.x, center.y);
+      if (hour%10==1){
+        digit_center = GPoint(center.x + thickness, center.y);
+      }
+    }
+    for (i = 2; i <= 2* Arabic[hour%10][1]; i = i + 2){
+      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i], digit_center.y + settings.HourSize*Arabic[hour%10][i+1]);
+      end = GPoint(start.x + shadow_x, start.y + shadow_y);
+      graphics_draw_line(ctx, start, end);
     }
   }
   
@@ -486,25 +772,54 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   }
   #endif
   
-  // Draw Hour Numeral
-  
   graphics_context_set_stroke_color(ctx, curr_hr_color);
-  if (hour == 0 && settings.HourMode == true){
-    start = GPoint(center.x, center.y);
-    end = GPoint(center.x + shadow_x, center.y + shadow_y);
+  
+  // Draw Hour Numeral
+  if (settings.NumeralType == 0){
+    if (hour == 0 && settings.HourMode == true){
+      start = GPoint(center.x, center.y);
+      end = GPoint(center.x + shadow_x, center.y + shadow_y);
+      graphics_context_set_stroke_width(ctx, thickness + 1);
+      graphics_draw_circle(ctx, start, 12*settings.HourSize);
+    } else {
+      graphics_context_set_stroke_width(ctx, thickness + 1);
+      digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+      for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+        digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+        for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+          end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
+          graphics_draw_line(ctx, start, end);
+        }
+        digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+      }
+    }
+  }
+  
+ //Draw Arabic Hour Shadow
+  if (settings.NumeralType == 1){
     graphics_context_set_stroke_width(ctx, thickness + 1);
-    graphics_draw_circle(ctx, start, 12*settings.HourSize);
-  } else {
-    graphics_context_set_stroke_width(ctx, thickness + 1);
-    digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
-    for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
-      digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
-      for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-        start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
-        end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
+    if (hour>=10){
+      //Draw the first digit, then 10's digit
+      int d1 = hour<20?1:0;
+      digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
+      for (i = 2; i < 2* Arabic[2-d1][1]; i = i + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i], digit_center.y + settings.HourSize*Arabic[2-d1][i+1]);
+        end = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i+2], digit_center.y + settings.HourSize*Arabic[2-d1][i+3]);
         graphics_draw_line(ctx, start, end);
       }
-      digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+      digit_center = GPoint(digit_center.x + thickness * (6 - (2*d1)), center.y);
+    } else {
+    //Draw single-digit hour
+      digit_center = GPoint(center.x, center.y);
+      if (hour%10==1){
+        digit_center = GPoint(center.x + thickness, center.y);
+      }
+    }
+    for (i = 2; i < 2* Arabic[hour%10][1]; i = i + 2){
+      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i], digit_center.y + settings.HourSize*Arabic[hour%10][i+1]);
+      end = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i+2], digit_center.y + settings.HourSize*Arabic[hour%10][i+3]);
+      graphics_draw_line(ctx, start, end);
     }
   }
   
@@ -590,6 +905,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.HourMode = hour_mode_t->value->int32 == 1;
   }
   
+  Tuple *numeral_type_t = dict_find(iterator, MESSAGE_KEY_NumeralType);
+  if (numeral_type_t) {
+    settings.NumeralType = numeral_type_t->value->int32 == 1;
+  }
+  
   #ifdef PBL_RGB_BACKLIGHT
   Tuple *light_color_t = dict_find(iterator, MESSAGE_KEY_BacklightColor);
   if (light_color_t) {
@@ -598,7 +918,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t || light_color_t) {
     prv_save_settings();
     apply_schedule_colors();
@@ -616,7 +936,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   #else
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t) {
     prv_save_settings();
     apply_schedule_colors();

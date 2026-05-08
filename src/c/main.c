@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 // define DEV and/or FORCE_BACKLIGHT when in development, for testing purposes
-#define DEV
+//#define DEV
 //#define FORCE_BACKLIGHT
 
 // define SCREENSHOT when posing for screenshots

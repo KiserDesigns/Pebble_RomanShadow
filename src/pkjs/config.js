@@ -16,8 +16,8 @@ module.exports = [
         "defaultValue": 2,
         "label": "Hour Numeral Size",
         "min": 1,
-        "max": 3,
-        "step": 1
+        "max": 4,
+        "step": 0.1
       },
       {
         "type": "color",

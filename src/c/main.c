@@ -94,7 +94,7 @@ static void prv_default_settings() {
   settings.BackgroundColor = GColorLightGray;
   settings.HourColor = GColorWhite;
   settings.MinuteColor = GColorBlack;
-  settings.HourSize = 2;
+  settings.HourSize = 20;
   settings.HourPulse = true;
   settings.VibeOffset = 0;
   settings.BTPulse = true;
@@ -121,6 +121,12 @@ static void prv_load_settings() {
   prv_default_settings();
   // Then override with any saved values
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+  
+  // Upgrade from old settings versions
+  if (settings.HourSize < 10){ // Version 2.1 updated scaling from integer 1-3 to 1.0-4.0*10 (10-40)
+    settings.HourSize = settings.HourSize * 10;
+    prv_save_settings();
+  }
 }
 
 
@@ -429,7 +435,7 @@ static int __5[] = {2,25,
                     -7,-3,
                     -8,0,
                     -4,0,
-                    -2,0,
+                    -2,-1,
                     0,-2,
                     2,-1,
                     4,0,
@@ -443,7 +449,7 @@ static int __5[] = {2,25,
                     0,12,
                     -2,11,
                     -4,10,
-                    -5,9,
+                    -6,9,
                     -8,8};
 static int __6[] = {2,31,
                     8,-8,
@@ -632,6 +638,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   #ifdef DEV
   hour = (tick_time->tm_sec) % 24;
+  hour = 5;
   minute = (tick_time->tm_sec/2) % 60;
   #endif
   
@@ -674,7 +681,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   int i, j;
   
   // Calculate the stroke thickness
-  int thickness = 4*settings.HourSize;
+  int thickness = 4*settings.HourSize/10;
   
   // Draw Shadow Elements (minute umbra, ticks, etc)
 
@@ -697,7 +704,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     if (hour == 0 && settings.HourMode == true){
       start = GPoint(center.x, center.y);
       end = GPoint(center.x + shadow_x, center.y + shadow_y);
-      graphics_context_set_stroke_width(ctx, 28*settings.HourSize+1);
+      graphics_context_set_stroke_width(ctx, 28*settings.HourSize/10+1);
       graphics_draw_line(ctx, start, end);
     } else {
       graphics_context_set_stroke_width(ctx, thickness + 1);
@@ -706,7 +713,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
         digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
         for (j = 2; j <= 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
+          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]/10);
           end = GPoint(start.x + shadow_x, start.y + shadow_y);
           graphics_draw_line(ctx, start, end);
         }
@@ -723,7 +730,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       int d1 = hour<20?1:0;
       digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
       for (i = 2; i <= 2* Arabic[2-d1][1]; i = i + 2){
-        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i], digit_center.y + settings.HourSize*Arabic[2-d1][i+1]);
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+1]/10);
         end = GPoint(start.x + shadow_x, start.y + shadow_y);
         graphics_draw_line(ctx, start, end);
       }
@@ -736,7 +743,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       }
     }
     for (i = 2; i <= 2* Arabic[hour%10][1]; i = i + 2){
-      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i], digit_center.y + settings.HourSize*Arabic[hour%10][i+1]);
+      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+1]/10);
       end = GPoint(start.x + shadow_x, start.y + shadow_y);
       graphics_draw_line(ctx, start, end);
     }
@@ -780,15 +787,15 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       start = GPoint(center.x, center.y);
       end = GPoint(center.x + shadow_x, center.y + shadow_y);
       graphics_context_set_stroke_width(ctx, thickness + 1);
-      graphics_draw_circle(ctx, start, 12*settings.HourSize);
+      graphics_draw_circle(ctx, start, 12*settings.HourSize/10);
     } else {
       graphics_context_set_stroke_width(ctx, thickness + 1);
       digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
       for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
         digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
         for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
-          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]);
-          end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2], digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]);
+          start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]/10);
+          end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]/10);
           graphics_draw_line(ctx, start, end);
         }
         digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
@@ -804,8 +811,8 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       int d1 = hour<20?1:0;
       digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
       for (i = 2; i < 2* Arabic[2-d1][1]; i = i + 2){
-        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i], digit_center.y + settings.HourSize*Arabic[2-d1][i+1]);
-        end = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i+2], digit_center.y + settings.HourSize*Arabic[2-d1][i+3]);
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+1]/10);
+        end = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i+2]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+3]/10);
         graphics_draw_line(ctx, start, end);
       }
       digit_center = GPoint(digit_center.x + thickness * (6 - (2*d1)), center.y);
@@ -817,8 +824,8 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       }
     }
     for (i = 2; i < 2* Arabic[hour%10][1]; i = i + 2){
-      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i], digit_center.y + settings.HourSize*Arabic[hour%10][i+1]);
-      end = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i+2], digit_center.y + settings.HourSize*Arabic[hour%10][i+3]);
+      start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+1]/10);
+      end = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i+2]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+3]/10);
       graphics_draw_line(ctx, start, end);
     }
   }

@@ -60,6 +60,12 @@ module.exports = [
         "messageKey": "HourMode",
         "label": "24hr Mode (0-XXIII)",
         "defaultValue": false
+      },,
+      {
+        "type": "toggle",
+        "messageKey": "HourBorder",
+        "label": "Draw Border around Hour",
+        "defaultValue": false
       },
       {
         "type": "toggle",

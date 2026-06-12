@@ -39,6 +39,7 @@ typedef struct ClaySettings {
   int VibeStart;
   int VibeEnd;
   bool NumeralType;
+  bool HourBorder;
 } ClaySettings;
 
 // An instance of the struct
@@ -108,6 +109,7 @@ static void prv_default_settings() {
   settings.VibeStart = 8;
   settings.VibeEnd = 20;
   settings.NumeralType = 0;
+  settings.HourBorder = 0;
 }
 
 // Save settings to persistent storage
@@ -779,17 +781,82 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   }
   #endif
   
-  graphics_context_set_stroke_color(ctx, curr_hr_color);
+  
+  // draw border for hour digit in background color if the background color is not the same as the hour numeral
+  if (settings.HourBorder && !gcolor_equal(curr_hr_color, curr_bg_color)){
+    #ifdef PBL_IF_BW
+    graphics_context_set_stroke_color(ctx,gcolor_equal(curr_hr_color, GColorWhite)?GColorBlack:GColorWhite);
+    #else
+    graphics_context_set_stroke_color(ctx, curr_bg_color);
+    #endif
+  
+    // Draw Hour Numeral
+    if (settings.NumeralType == 0){
+      graphics_context_set_stroke_width(ctx, thickness + 3);
+      if (hour == 0 && settings.HourMode == true){
+        start = GPoint(center.x, center.y);
+        end = GPoint(center.x + shadow_x, center.y + shadow_y);
+        graphics_draw_circle(ctx, start, 12*settings.HourSize/10);
+      } else {
+        digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+        for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+          digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+          for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+            start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]/10);
+            end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]/10);
+            graphics_draw_line(ctx, start, end);
+          }
+          digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+        }
+      }
+    }
+    
+   //Draw Arabic Hour Numeral
+    if (settings.NumeralType == 1){
+      graphics_context_set_stroke_width(ctx, thickness + 3);
+      if (hour>=10){
+        //Draw the first digit, then 10's digit
+        int d1 = hour<20?1:0;
+        digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
+        for (i = 2; i < 2* Arabic[2-d1][1]; i = i + 2){
+          start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+1]/10);
+          end = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i+2]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+3]/10);
+          graphics_draw_line(ctx, start, end);
+        }
+        digit_center = GPoint(digit_center.x + thickness * (6 - (2*d1)), center.y);
+      } else {
+      //Draw single-digit hour
+        digit_center = GPoint(center.x, center.y);
+        if (hour%10==1){
+          digit_center = GPoint(center.x + thickness, center.y);
+        }
+      }
+      for (i = 2; i < 2* Arabic[hour%10][1]; i = i + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+1]/10);
+        end = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i+2]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+3]/10);
+        graphics_draw_line(ctx, start, end);
+      }
+    }
+  }
+  
+  if (settings.HourBorder && gcolor_equal(curr_bg_color, curr_hr_color)){
+    #ifdef PBL_IF_BW
+    graphics_context_set_stroke_color(ctx,gcolor_equal(curr_hr_color, GColorWhite)?GColorBlack:GColorWhite);
+    #else
+    graphics_context_set_stroke_color(ctx, curr_min_color);
+    #endif
+  } else {
+    graphics_context_set_stroke_color(ctx, curr_hr_color);
+  }
   
   // Draw Hour Numeral
   if (settings.NumeralType == 0){
+    graphics_context_set_stroke_width(ctx, thickness + 1);
     if (hour == 0 && settings.HourMode == true){
       start = GPoint(center.x, center.y);
       end = GPoint(center.x + shadow_x, center.y + shadow_y);
-      graphics_context_set_stroke_width(ctx, thickness + 1);
       graphics_draw_circle(ctx, start, 12*settings.HourSize/10);
     } else {
-      graphics_context_set_stroke_width(ctx, thickness + 1);
       digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
       for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
         digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
@@ -803,7 +870,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
     }
   }
   
- //Draw Arabic Hour Shadow
+ //Draw Arabic Hour Numeral
   if (settings.NumeralType == 1){
     graphics_context_set_stroke_width(ctx, thickness + 1);
     if (hour>=10){
@@ -829,6 +896,63 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
       graphics_draw_line(ctx, start, end);
     }
   }
+  
+  
+  // draw smaller hour digit if the hour color is same as the background numeral
+  if (settings.HourBorder && gcolor_equal(curr_hr_color, curr_bg_color)){
+    graphics_context_set_stroke_color(ctx, curr_hr_color);
+  
+    // Draw Hour Numeral
+    if (settings.NumeralType == 0){
+      graphics_context_set_stroke_width(ctx, thickness - 1);
+      if (hour == 0 && settings.HourMode == true){
+        start = GPoint(center.x, center.y);
+        end = GPoint(center.x + shadow_x, center.y + shadow_y);
+        graphics_draw_circle(ctx, start, 12*settings.HourSize/10);
+      } else {
+        digit_center = GPoint(center.x - Numerals[hour]->Width * thickness/2, center.y);
+        for (i = 0; i<Numerals[hour]->NumberOfDigits; i++){
+          digit_center = GPoint(digit_center.x + thickness*(Numerals[hour]->Digits[i][0]), digit_center.y);
+          for (j = 2; j < 2* Numerals[hour]->Digits[i][1]; j = j + 2){
+            start = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+1]/10);
+            end = GPoint(digit_center.x + settings.HourSize*Numerals[hour]->Digits[i][j+2]/10, digit_center.y + settings.HourSize*Numerals[hour]->Digits[i][j+3]/10);
+            graphics_draw_line(ctx, start, end);
+          }
+          digit_center = GPoint(digit_center.x + thickness*(2+Numerals[hour]->Digits[i][0]), digit_center.y);
+        }
+      }
+    }
+    
+   //Draw Arabic Hour Numeral
+    if (settings.NumeralType == 1){
+      graphics_context_set_stroke_width(ctx, thickness - 1);
+      if (hour>=10){
+        //Draw the first digit, then 10's digit
+        int d1 = hour<20?1:0;
+        digit_center = GPoint(center.x - (((hour%10==1?2:3) - d1) * thickness ), center.y);
+        for (i = 2; i < 2* Arabic[2-d1][1]; i = i + 2){
+          start = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+1]/10);
+          end = GPoint(digit_center.x + settings.HourSize*Arabic[2-d1][i+2]/10, digit_center.y + settings.HourSize*Arabic[2-d1][i+3]/10);
+          graphics_draw_line(ctx, start, end);
+        }
+        digit_center = GPoint(digit_center.x + thickness * (6 - (2*d1)), center.y);
+      } else {
+      //Draw single-digit hour
+        digit_center = GPoint(center.x, center.y);
+        if (hour%10==1){
+          digit_center = GPoint(center.x + thickness, center.y);
+        }
+      }
+      for (i = 2; i < 2* Arabic[hour%10][1]; i = i + 2){
+        start = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+1]/10);
+        end = GPoint(digit_center.x + settings.HourSize*Arabic[hour%10][i+2]/10, digit_center.y + settings.HourSize*Arabic[hour%10][i+3]/10);
+        graphics_draw_line(ctx, start, end);
+      }
+    }
+  }
+  
+  
+
   
   if (settings.TickSize > 0) {
     graphics_context_set_stroke_width(ctx, settings.TickSize*2 - 1);
@@ -917,6 +1041,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.NumeralType = numeral_type_t->value->int32 == 1;
   }
   
+  Tuple *hour_border_t = dict_find(iterator, MESSAGE_KEY_HourBorder);
+  if (hour_border_t) {
+    settings.HourBorder = hour_border_t->value->int32 == 1;
+  }
+  
   #ifdef PBL_RGB_BACKLIGHT
   Tuple *light_color_t = dict_find(iterator, MESSAGE_KEY_BacklightColor);
   if (light_color_t) {
@@ -925,7 +1054,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t || hour_border_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t || light_color_t) {
     prv_save_settings();
     apply_schedule_colors();
@@ -943,7 +1072,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   #else
   
   // Save and apply if any settings were changed
-  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t ||\
+  if ( bg_color_t || hour_color_t || min_color_t || hour_mode_t || vibe_offset_t || numeral_type_t || hour_border_t ||\
       hour_size_t || hour_pulse_t || bt_pulse_t || tick_size_t || vibe_start_t || vibe_end_t) {
     prv_save_settings();
     apply_schedule_colors();

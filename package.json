@@ -33,7 +33,8 @@
             "BL[10]",
             "VibeStart",
             "VibeEnd",
-            "NumeralType"
+            "NumeralType",
+            "HourBorder"
         ],
         "projectType": "native",
         "resources": {
@@ -63,5 +64,5 @@
             "watchface": true
         }
     },
-    "version": "2.1.0"
+    "version": "2.1.1"
 }

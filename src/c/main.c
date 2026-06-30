@@ -109,7 +109,7 @@ static void prv_default_settings() {
   settings.VibeStart = 8;
   settings.VibeEnd = 20;
   settings.NumeralType = 0;
-  settings.HourBorder = 0;
+  settings.HourBorder = false;
 }
 
 // Save settings to persistent storage
@@ -784,7 +784,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   // draw border for hour digit in background color if the background color is not the same as the hour numeral
   if (settings.HourBorder && !gcolor_equal(curr_hr_color, curr_bg_color)){
-    #ifdef PBL_IF_BW
+    #ifdef PBL_BW
     graphics_context_set_stroke_color(ctx,gcolor_equal(curr_hr_color, GColorWhite)?GColorBlack:GColorWhite);
     #else
     graphics_context_set_stroke_color(ctx, curr_bg_color);
@@ -840,7 +840,7 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   }
   
   if (settings.HourBorder && gcolor_equal(curr_bg_color, curr_hr_color)){
-    #ifdef PBL_IF_BW
+    #ifdef PBL_BW
     graphics_context_set_stroke_color(ctx,gcolor_equal(curr_hr_color, GColorWhite)?GColorBlack:GColorWhite);
     #else
     graphics_context_set_stroke_color(ctx, curr_min_color);

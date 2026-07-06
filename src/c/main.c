@@ -631,7 +631,11 @@ static void window_update_proc(Layer *layer, GContext *ctx) {
   
   window_set_background_color(s_main_window, curr_bg_color);
   #ifdef PBL_RGB_BACKLIGHT
-  light_set_color(curr_bl_color);
+  if (gcolor_equal(curr_bl_color, GColorWhite)){
+    light_set_system_color();
+  } else {
+    light_set_color(curr_bl_color);
+  }
   #endif
   
   // Get Local Time
